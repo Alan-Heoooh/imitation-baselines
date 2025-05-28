@@ -14,663 +14,39 @@ import collections.abc as container_abcs
 from torch.utils.data import Dataset
 # import clip
 
-TO_TENSOR_KEYS = ['language_embed', 'language_mask', 'top_image_list', 'wrist_image_list', 'input_frame_tcp_normalized', 'target_frame_tcp_normalized', 'padding_mask']
-PROBLEM_TASKS = [('task_0091_user_0015_scene_0003_cfg_0001', 'cam_038522063145'),
-                 ('task_0100_user_0007_scene_0006_cfg_0002', 'cam_037522062165'),
-                 ('task_0001_user_0016_scene_0001_cfg_0003', 'cam_038522062288'),
-                 ('task_0001_user_0016_scene_0001_cfg_0003', 'cam_104422070011'),
-                 ('task_0054_user_0010_scene_0001_cfg_0003', 'cam_038522062288'),
-                 ('task_0054_user_0010_scene_0001_cfg_0003', 'cam_104422070011'),
-                 ('task_0054_user_0010_scene_0002_cfg_0003', 'cam_038522062288'),
-                 ('task_0054_user_0010_scene_0002_cfg_0003', 'cam_104422070011'),
-                 ('task_0054_user_0010_scene_0004_cfg_0003', 'cam_038522062288'),
-                 ('task_0054_user_0010_scene_0004_cfg_0003', 'cam_104422070011'),
-                 ('task_0054_user_0010_scene_0005_cfg_0003', 'cam_038522062288'),
-                 ('task_0054_user_0010_scene_0005_cfg_0003', 'cam_104422070011'),
-                 ('task_0054_user_0010_scene_0006_cfg_0003', 'cam_038522062288'),
-                 ('task_0054_user_0010_scene_0006_cfg_0003', 'cam_104422070011'),
-                 ('task_0054_user_0010_scene_0007_cfg_0003', 'cam_038522062288'),
-                 ('task_0054_user_0010_scene_0007_cfg_0003', 'cam_104422070011'),
-                 ('task_0054_user_0010_scene_0008_cfg_0003', 'cam_038522062288'),
-                 ('task_0054_user_0010_scene_0008_cfg_0003', 'cam_104422070011'),
-                 ('task_0054_user_0010_scene_0009_cfg_0003', 'cam_038522062288'),
-                 ('task_0054_user_0010_scene_0009_cfg_0003', 'cam_104422070011'),
-                 ('task_0054_user_0010_scene_0010_cfg_0003', 'cam_038522062288'),
-                 ('task_0054_user_0010_scene_0010_cfg_0003', 'cam_104422070011'),
-                 ('task_0066_user_0010_scene_0001_cfg_0003', 'cam_038522062288'),
-                 ('task_0066_user_0010_scene_0001_cfg_0003', 'cam_104422070011'),
-                 ('task_0066_user_0010_scene_0004_cfg_0003', 'cam_038522062288'),
-                 ('task_0066_user_0010_scene_0004_cfg_0003', 'cam_104422070011'),
-                 ('task_0066_user_0010_scene_0005_cfg_0003', 'cam_038522062288'),
-                 ('task_0066_user_0010_scene_0005_cfg_0003', 'cam_104422070011'),
-                 ('task_0066_user_0010_scene_0006_cfg_0003', 'cam_038522062288'),
-                 ('task_0066_user_0010_scene_0006_cfg_0003', 'cam_104422070011'),
-                 ('task_0066_user_0010_scene_0007_cfg_0003', 'cam_038522062288'),
-                 ('task_0066_user_0010_scene_0007_cfg_0003', 'cam_104422070011'),
-                 ('task_0066_user_0010_scene_0008_cfg_0003', 'cam_038522062288'),
-                 ('task_0066_user_0010_scene_0008_cfg_0003', 'cam_104422070011'),
-                 ('task_0066_user_0010_scene_0009_cfg_0003', 'cam_038522062288'),
-                 ('task_0066_user_0010_scene_0009_cfg_0003', 'cam_104422070011'),
-                 ('task_0066_user_0010_scene_0010_cfg_0003', 'cam_038522062288'),
-                 ('task_0066_user_0010_scene_0010_cfg_0003', 'cam_104422070011'),
-                 ('task_0067_user_0010_scene_0001_cfg_0003', 'cam_038522062288'),
-                 ('task_0067_user_0010_scene_0001_cfg_0003', 'cam_104422070011'),
-                 ('task_0067_user_0010_scene_0002_cfg_0003', 'cam_038522062288'),
-                 ('task_0067_user_0010_scene_0002_cfg_0003', 'cam_104422070011'),
-                 ('task_0067_user_0010_scene_0003_cfg_0003', 'cam_038522062288'),
-                 ('task_0067_user_0010_scene_0003_cfg_0003', 'cam_104422070011'),
-                 ('task_0067_user_0010_scene_0004_cfg_0003', 'cam_038522062288'),
-                 ('task_0067_user_0010_scene_0004_cfg_0003', 'cam_104422070011'),
-                 ('task_0067_user_0010_scene_0005_cfg_0003', 'cam_038522062288'),
-                 ('task_0067_user_0010_scene_0005_cfg_0003', 'cam_104422070011'),
-                 ('task_0067_user_0010_scene_0006_cfg_0003', 'cam_038522062288'),
-                 ('task_0067_user_0010_scene_0006_cfg_0003', 'cam_104422070011'),
-                 ('task_0067_user_0010_scene_0007_cfg_0003', 'cam_038522062288'),
-                 ('task_0067_user_0010_scene_0007_cfg_0003', 'cam_104422070011'),
-                 ('task_0067_user_0010_scene_0008_cfg_0003', 'cam_038522062288'),
-                 ('task_0067_user_0010_scene_0008_cfg_0003', 'cam_104422070011'),
-                 ('task_0067_user_0010_scene_0009_cfg_0003', 'cam_038522062288'),
-                 ('task_0067_user_0010_scene_0009_cfg_0003', 'cam_104422070011'),
-                 ('task_0067_user_0010_scene_0010_cfg_0003', 'cam_038522062288'),
-                 ('task_0067_user_0010_scene_0010_cfg_0003', 'cam_104422070011'),
-                 ('task_0076_user_0010_scene_0001_cfg_0003', 'cam_038522062288'),
-                 ('task_0076_user_0010_scene_0001_cfg_0003', 'cam_104422070011'),
-                 ('task_0076_user_0010_scene_0002_cfg_0003', 'cam_038522062288'),
-                 ('task_0076_user_0010_scene_0002_cfg_0003', 'cam_104422070011'),
-                 ('task_0076_user_0010_scene_0003_cfg_0003', 'cam_038522062288'),
-                 ('task_0076_user_0010_scene_0003_cfg_0003', 'cam_104422070011'),
-                 ('task_0076_user_0010_scene_0004_cfg_0003', 'cam_038522062288'),
-                 ('task_0076_user_0010_scene_0004_cfg_0003', 'cam_104422070011'),
-                 ('task_0076_user_0010_scene_0005_cfg_0003', 'cam_038522062288'),
-                 ('task_0076_user_0010_scene_0005_cfg_0003', 'cam_104422070011'),
-                 ('task_0076_user_0010_scene_0006_cfg_0003', 'cam_038522062288'),
-                 ('task_0076_user_0010_scene_0006_cfg_0003', 'cam_104422070011'),
-                 ('task_0076_user_0010_scene_0007_cfg_0003', 'cam_038522062288'),
-                 ('task_0076_user_0010_scene_0007_cfg_0003', 'cam_104422070011'),
-                 ('task_0076_user_0010_scene_0008_cfg_0003', 'cam_038522062288'),
-                 ('task_0076_user_0010_scene_0008_cfg_0003', 'cam_104422070011'),
-                 ('task_0076_user_0010_scene_0009_cfg_0003', 'cam_038522062288'),
-                 ('task_0076_user_0010_scene_0009_cfg_0003', 'cam_104422070011'),
-                 ('task_0076_user_0010_scene_0010_cfg_0003', 'cam_038522062288'),
-                 ('task_0076_user_0010_scene_0010_cfg_0003', 'cam_104422070011'),
-                 ('task_0077_user_0010_scene_0001_cfg_0003', 'cam_038522062288'),
-                 ('task_0077_user_0010_scene_0001_cfg_0003', 'cam_104422070011'),
-                 ('task_0077_user_0010_scene_0002_cfg_0003', 'cam_038522062288'),
-                 ('task_0077_user_0010_scene_0002_cfg_0003', 'cam_104422070011'),
-                 ('task_0077_user_0010_scene_0003_cfg_0003', 'cam_038522062288'),
-                 ('task_0077_user_0010_scene_0003_cfg_0003', 'cam_104422070011'),
-                 ('task_0077_user_0010_scene_0004_cfg_0003', 'cam_038522062288'),
-                 ('task_0077_user_0010_scene_0004_cfg_0003', 'cam_104422070011'),
-                 ('task_0077_user_0010_scene_0005_cfg_0003', 'cam_038522062288'),
-                 ('task_0077_user_0010_scene_0005_cfg_0003', 'cam_104422070011'),
-                 ('task_0077_user_0010_scene_0006_cfg_0003', 'cam_038522062288'),
-                 ('task_0077_user_0010_scene_0006_cfg_0003', 'cam_104422070011'),
-                 ('task_0077_user_0010_scene_0007_cfg_0003', 'cam_038522062288'),
-                 ('task_0077_user_0010_scene_0007_cfg_0003', 'cam_104422070011'),
-                 ('task_0077_user_0010_scene_0008_cfg_0003', 'cam_038522062288'),
-                 ('task_0077_user_0010_scene_0008_cfg_0003', 'cam_104422070011'),
-                 ('task_0077_user_0010_scene_0009_cfg_0003', 'cam_038522062288'),
-                 ('task_0077_user_0010_scene_0009_cfg_0003', 'cam_104422070011'),
-                 ('task_0077_user_0010_scene_0010_cfg_0003', 'cam_038522062288'),
-                 ('task_0077_user_0010_scene_0010_cfg_0003', 'cam_104422070011'),
-                 ('task_0091_user_0010_scene_0001_cfg_0003', 'cam_038522062288'),
-                 ('task_0091_user_0010_scene_0001_cfg_0003', 'cam_104422070011'),
-                 ('task_0091_user_0010_scene_0002_cfg_0003', 'cam_038522062288'),
-                 ('task_0091_user_0010_scene_0002_cfg_0003', 'cam_104422070011'),
-                 ('task_0091_user_0010_scene_0003_cfg_0003', 'cam_038522062288'),
-                 ('task_0091_user_0010_scene_0003_cfg_0003', 'cam_104422070011'),
-                 ('task_0091_user_0010_scene_0004_cfg_0003', 'cam_038522062288'),
-                 ('task_0091_user_0010_scene_0004_cfg_0003', 'cam_104422070011'),
-                 ('task_0091_user_0010_scene_0005_cfg_0003', 'cam_038522062288'),
-                 ('task_0091_user_0010_scene_0005_cfg_0003', 'cam_104422070011'),
-                 ('task_0091_user_0010_scene_0006_cfg_0003', 'cam_038522062288'),
-                 ('task_0091_user_0010_scene_0006_cfg_0003', 'cam_104422070011'),
-                 ('task_0091_user_0010_scene_0007_cfg_0003', 'cam_038522062288'),
-                 ('task_0091_user_0010_scene_0007_cfg_0003', 'cam_104422070011'),
-                 ('task_0091_user_0010_scene_0009_cfg_0003', 'cam_038522062288'),
-                 ('task_0091_user_0010_scene_0009_cfg_0003', 'cam_104422070011'),
-                 ('task_0091_user_0010_scene_0010_cfg_0003', 'cam_038522062288'),
-                 ('task_0091_user_0010_scene_0010_cfg_0003', 'cam_104422070011'),
-                 ('task_0092_user_0010_scene_0001_cfg_0003', 'cam_038522062288'),
-                 ('task_0092_user_0010_scene_0001_cfg_0003', 'cam_104422070011'),
-                 ('task_0092_user_0010_scene_0002_cfg_0003', 'cam_038522062288'),
-                 ('task_0092_user_0010_scene_0002_cfg_0003', 'cam_104422070011'),
-                 ('task_0092_user_0010_scene_0003_cfg_0003', 'cam_038522062288'),
-                 ('task_0092_user_0010_scene_0003_cfg_0003', 'cam_104422070011'),
-                 ('task_0092_user_0010_scene_0004_cfg_0003', 'cam_038522062288'),
-                 ('task_0092_user_0010_scene_0004_cfg_0003', 'cam_104422070011'),
-                 ('task_0092_user_0010_scene_0005_cfg_0003', 'cam_038522062288'),
-                 ('task_0092_user_0010_scene_0005_cfg_0003', 'cam_104422070011'),
-                 ('task_0092_user_0010_scene_0006_cfg_0003', 'cam_038522062288'),
-                 ('task_0092_user_0010_scene_0006_cfg_0003', 'cam_104422070011'),
-                 ('task_0092_user_0010_scene_0007_cfg_0003', 'cam_038522062288'),
-                 ('task_0092_user_0010_scene_0007_cfg_0003', 'cam_104422070011'),
-                 ('task_0092_user_0010_scene_0008_cfg_0003', 'cam_038522062288'),
-                 ('task_0092_user_0010_scene_0008_cfg_0003', 'cam_104422070011'),
-                 ('task_0092_user_0010_scene_0009_cfg_0003', 'cam_038522062288'),
-                 ('task_0092_user_0010_scene_0009_cfg_0003', 'cam_104422070011'),
-                 ('task_0092_user_0010_scene_0010_cfg_0003', 'cam_038522062288'),
-                 ('task_0092_user_0010_scene_0010_cfg_0003', 'cam_104422070011'),
-                 ('task_0002_user_0010_scene_0005_cfg_0004', 'cam_104422070011'),
-                 ('task_0003_user_0010_scene_0005_cfg_0004', 'cam_036422060909'),
-                 ('task_0005_user_0010_scene_0002_cfg_0004', 'cam_036422060909'),
-                 ('task_0007_user_0010_scene_0003_cfg_0004', 'cam_104122062823'),
-                 ('task_0007_user_0010_scene_0007_cfg_0004', 'cam_104122062823'),
-                 ('task_0044_user_0014_scene_0010_cfg_0004', 'cam_f0172289'),
-                 ('task_0045_user_0014_scene_0008_cfg_0004', 'cam_036422060909'),
-                 ('task_0011_user_0007_scene_0009_cfg_0005', 'cam_036422060215'),
-                 ('task_0011_user_0007_scene_0009_cfg_0005', 'cam_037522062165'),
-                 ('task_0011_user_0007_scene_0009_cfg_0005', 'cam_104122061850'),
-                 ('task_0011_user_0007_scene_0009_cfg_0005', 'cam_104122063678'),
-                 ('task_0011_user_0007_scene_0009_cfg_0005', 'cam_104422070044'),
-                 ('task_0011_user_0007_scene_0009_cfg_0005', 'cam_105422061350'),
-                 ('task_0034_user_0007_scene_0010_cfg_0005', 'cam_037522062165'),
-                 ('task_0034_user_0007_scene_0010_cfg_0005', 'cam_104122063678'),
-                 ('task_0034_user_0007_scene_0010_cfg_0005', 'cam_104422070044'),
-                 ('task_0034_user_0007_scene_0010_cfg_0005', 'cam_105422061350'),
-                 ('task_0034_user_0010_scene_0005_cfg_0005', 'cam_036422060215'),
-                 ('task_0034_user_0010_scene_0005_cfg_0005', 'cam_037522062165'),
-                 ('task_0034_user_0010_scene_0005_cfg_0005', 'cam_104122061850'),
-                 ('task_0034_user_0010_scene_0005_cfg_0005', 'cam_104122063678'),
-                 ('task_0034_user_0010_scene_0005_cfg_0005', 'cam_104422070044'),
-                 ('task_0034_user_0010_scene_0005_cfg_0005', 'cam_105422061350'),
-                 ('task_0034_user_0010_scene_0005_cfg_0005', 'cam_f0461559'),
-                 ('task_0035_user_0010_scene_0001_cfg_0005', 'cam_036422060215'),
-                 ('task_0035_user_0010_scene_0001_cfg_0005', 'cam_037522062165'),
-                 ('task_0035_user_0010_scene_0001_cfg_0005', 'cam_104122061850'),
-                 ('task_0035_user_0010_scene_0001_cfg_0005', 'cam_104122063678'),
-                 ('task_0035_user_0010_scene_0001_cfg_0005', 'cam_104422070044'),
-                 ('task_0035_user_0010_scene_0001_cfg_0005', 'cam_105422061350'),
-                 ('task_0035_user_0010_scene_0001_cfg_0005', 'cam_f0461559'),
-                 ('task_0035_user_0010_scene_0002_cfg_0005', 'cam_036422060215'),
-                 ('task_0035_user_0010_scene_0002_cfg_0005', 'cam_037522062165'),
-                 ('task_0035_user_0010_scene_0002_cfg_0005', 'cam_104122061850'),
-                 ('task_0035_user_0010_scene_0002_cfg_0005', 'cam_104122063678'),
-                 ('task_0035_user_0010_scene_0002_cfg_0005', 'cam_104422070044'),
-                 ('task_0035_user_0010_scene_0002_cfg_0005', 'cam_105422061350'),
-                 ('task_0035_user_0010_scene_0002_cfg_0005', 'cam_f0461559'),
-                 ('task_0035_user_0010_scene_0003_cfg_0005', 'cam_036422060215'),
-                 ('task_0035_user_0010_scene_0003_cfg_0005', 'cam_037522062165'),
-                 ('task_0035_user_0010_scene_0003_cfg_0005', 'cam_104122061850'),
-                 ('task_0035_user_0010_scene_0003_cfg_0005', 'cam_104122063678'),
-                 ('task_0035_user_0010_scene_0003_cfg_0005', 'cam_104422070044'),
-                 ('task_0035_user_0010_scene_0003_cfg_0005', 'cam_105422061350'),
-                 ('task_0035_user_0010_scene_0003_cfg_0005', 'cam_f0461559'),
-                 ('task_0035_user_0010_scene_0004_cfg_0005', 'cam_036422060215'),
-                 ('task_0035_user_0010_scene_0004_cfg_0005', 'cam_037522062165'),
-                 ('task_0035_user_0010_scene_0004_cfg_0005', 'cam_104122061850'),
-                 ('task_0035_user_0010_scene_0004_cfg_0005', 'cam_104122063678'),
-                 ('task_0035_user_0010_scene_0004_cfg_0005', 'cam_104422070044'),
-                 ('task_0035_user_0010_scene_0004_cfg_0005', 'cam_105422061350'),
-                 ('task_0035_user_0010_scene_0004_cfg_0005', 'cam_f0461559'),
-                 ('task_0035_user_0010_scene_0005_cfg_0005', 'cam_036422060215'),
-                 ('task_0035_user_0010_scene_0005_cfg_0005', 'cam_037522062165'),
-                 ('task_0035_user_0010_scene_0005_cfg_0005', 'cam_104122061850'),
-                 ('task_0035_user_0010_scene_0005_cfg_0005', 'cam_104122063678'),
-                 ('task_0035_user_0010_scene_0005_cfg_0005', 'cam_104422070044'),
-                 ('task_0035_user_0010_scene_0005_cfg_0005', 'cam_105422061350'),
-                 ('task_0035_user_0010_scene_0005_cfg_0005', 'cam_f0461559'),
-                 ('task_0035_user_0010_scene_0007_cfg_0005', 'cam_036422060215'),
-                 ('task_0035_user_0010_scene_0007_cfg_0005', 'cam_037522062165'),
-                 ('task_0035_user_0010_scene_0007_cfg_0005', 'cam_104122061850'),
-                 ('task_0035_user_0010_scene_0007_cfg_0005', 'cam_104122063678'),
-                 ('task_0035_user_0010_scene_0007_cfg_0005', 'cam_104422070044'),
-                 ('task_0035_user_0010_scene_0007_cfg_0005', 'cam_105422061350'),
-                 ('task_0035_user_0010_scene_0007_cfg_0005', 'cam_f0461559'),
-                 ('task_0035_user_0010_scene_0008_cfg_0005', 'cam_036422060215'),
-                 ('task_0035_user_0010_scene_0008_cfg_0005', 'cam_037522062165'),
-                 ('task_0035_user_0010_scene_0008_cfg_0005', 'cam_104122061850'),
-                 ('task_0035_user_0010_scene_0008_cfg_0005', 'cam_104122063678'),
-                 ('task_0035_user_0010_scene_0008_cfg_0005', 'cam_104422070044'),
-                 ('task_0035_user_0010_scene_0008_cfg_0005', 'cam_105422061350'),
-                 ('task_0035_user_0010_scene_0008_cfg_0005', 'cam_f0461559'),
-                 ('task_0035_user_0010_scene_0009_cfg_0005', 'cam_036422060215'),
-                 ('task_0035_user_0010_scene_0009_cfg_0005', 'cam_037522062165'),
-                 ('task_0035_user_0010_scene_0009_cfg_0005', 'cam_104122061850'),
-                 ('task_0035_user_0010_scene_0009_cfg_0005', 'cam_104122063678'),
-                 ('task_0035_user_0010_scene_0009_cfg_0005', 'cam_104422070044'),
-                 ('task_0035_user_0010_scene_0009_cfg_0005', 'cam_105422061350'),
-                 ('task_0035_user_0010_scene_0009_cfg_0005', 'cam_f0461559'),
-                 ('task_0035_user_0010_scene_0010_cfg_0005', 'cam_036422060215'),
-                 ('task_0035_user_0010_scene_0010_cfg_0005', 'cam_037522062165'),
-                 ('task_0035_user_0010_scene_0010_cfg_0005', 'cam_104122061850'),
-                 ('task_0035_user_0010_scene_0010_cfg_0005', 'cam_104122063678'),
-                 ('task_0035_user_0010_scene_0010_cfg_0005', 'cam_104422070044'),
-                 ('task_0035_user_0010_scene_0010_cfg_0005', 'cam_105422061350'),
-                 ('task_0035_user_0010_scene_0010_cfg_0005', 'cam_f0461559'),
-                 ('task_0036_user_0010_scene_0001_cfg_0005', 'cam_036422060215'),
-                 ('task_0036_user_0010_scene_0001_cfg_0005', 'cam_037522062165'),
-                 ('task_0036_user_0010_scene_0001_cfg_0005', 'cam_104122061850'),
-                 ('task_0036_user_0010_scene_0001_cfg_0005', 'cam_104122063678'),
-                 ('task_0036_user_0010_scene_0001_cfg_0005', 'cam_104422070044'),
-                 ('task_0036_user_0010_scene_0001_cfg_0005', 'cam_105422061350'),
-                 ('task_0036_user_0010_scene_0001_cfg_0005', 'cam_f0461559'),
-                 ('task_0036_user_0010_scene_0002_cfg_0005', 'cam_036422060215'),
-                 ('task_0036_user_0010_scene_0002_cfg_0005', 'cam_037522062165'),
-                 ('task_0036_user_0010_scene_0002_cfg_0005', 'cam_104122061850'),
-                 ('task_0036_user_0010_scene_0002_cfg_0005', 'cam_104122063678'),
-                 ('task_0036_user_0010_scene_0002_cfg_0005', 'cam_104422070044'),
-                 ('task_0036_user_0010_scene_0002_cfg_0005', 'cam_105422061350'),
-                 ('task_0036_user_0010_scene_0002_cfg_0005', 'cam_f0461559'),
-                 ('task_0036_user_0010_scene_0003_cfg_0005', 'cam_036422060215'),
-                 ('task_0036_user_0010_scene_0003_cfg_0005', 'cam_037522062165'),
-                 ('task_0036_user_0010_scene_0003_cfg_0005', 'cam_104122061850'),
-                 ('task_0036_user_0010_scene_0003_cfg_0005', 'cam_104122063678'),
-                 ('task_0036_user_0010_scene_0003_cfg_0005', 'cam_104422070044'),
-                 ('task_0036_user_0010_scene_0003_cfg_0005', 'cam_105422061350'),
-                 ('task_0036_user_0010_scene_0003_cfg_0005', 'cam_f0461559'),
-                 ('task_0036_user_0010_scene_0004_cfg_0005', 'cam_036422060215'),
-                 ('task_0036_user_0010_scene_0004_cfg_0005', 'cam_037522062165'),
-                 ('task_0036_user_0010_scene_0004_cfg_0005', 'cam_104122061850'),
-                 ('task_0036_user_0010_scene_0004_cfg_0005', 'cam_104122063678'),
-                 ('task_0036_user_0010_scene_0004_cfg_0005', 'cam_104422070044'),
-                 ('task_0036_user_0010_scene_0004_cfg_0005', 'cam_105422061350'),
-                 ('task_0036_user_0010_scene_0004_cfg_0005', 'cam_f0461559'),
-                 ('task_0036_user_0010_scene_0006_cfg_0005', 'cam_036422060215'),
-                 ('task_0036_user_0010_scene_0006_cfg_0005', 'cam_037522062165'),
-                 ('task_0036_user_0010_scene_0006_cfg_0005', 'cam_104122061850'),
-                 ('task_0036_user_0010_scene_0006_cfg_0005', 'cam_104122063678'),
-                 ('task_0036_user_0010_scene_0006_cfg_0005', 'cam_104422070044'),
-                 ('task_0036_user_0010_scene_0006_cfg_0005', 'cam_105422061350'),
-                 ('task_0036_user_0010_scene_0006_cfg_0005', 'cam_f0461559'),
-                 ('task_0036_user_0010_scene_0007_cfg_0005', 'cam_036422060215'),
-                 ('task_0036_user_0010_scene_0007_cfg_0005', 'cam_037522062165'),
-                 ('task_0036_user_0010_scene_0007_cfg_0005', 'cam_104122061850'),
-                 ('task_0036_user_0010_scene_0007_cfg_0005', 'cam_104122063678'),
-                 ('task_0036_user_0010_scene_0007_cfg_0005', 'cam_104422070044'),
-                 ('task_0036_user_0010_scene_0007_cfg_0005', 'cam_105422061350'),
-                 ('task_0036_user_0010_scene_0007_cfg_0005', 'cam_f0461559'),
-                 ('task_0036_user_0010_scene_0008_cfg_0005', 'cam_036422060215'),
-                 ('task_0036_user_0010_scene_0008_cfg_0005', 'cam_037522062165'),
-                 ('task_0036_user_0010_scene_0008_cfg_0005', 'cam_104122061850'),
-                 ('task_0036_user_0010_scene_0008_cfg_0005', 'cam_104122063678'),
-                 ('task_0036_user_0010_scene_0008_cfg_0005', 'cam_104422070044'),
-                 ('task_0036_user_0010_scene_0008_cfg_0005', 'cam_105422061350'),
-                 ('task_0036_user_0010_scene_0009_cfg_0005', 'cam_036422060215'),
-                 ('task_0036_user_0010_scene_0009_cfg_0005', 'cam_037522062165'),
-                 ('task_0036_user_0010_scene_0009_cfg_0005', 'cam_104122061850'),
-                 ('task_0036_user_0010_scene_0009_cfg_0005', 'cam_104122063678'),
-                 ('task_0036_user_0010_scene_0009_cfg_0005', 'cam_104422070044'),
-                 ('task_0036_user_0010_scene_0009_cfg_0005', 'cam_105422061350'),
-                 ('task_0036_user_0010_scene_0010_cfg_0005', 'cam_036422060215'),
-                 ('task_0036_user_0010_scene_0010_cfg_0005', 'cam_037522062165'),
-                 ('task_0036_user_0010_scene_0010_cfg_0005', 'cam_104122061850'),
-                 ('task_0036_user_0010_scene_0010_cfg_0005', 'cam_104122063678'),
-                 ('task_0036_user_0010_scene_0010_cfg_0005', 'cam_104422070044'),
-                 ('task_0036_user_0010_scene_0010_cfg_0005', 'cam_105422061350'),
-                 ('task_0070_user_0007_scene_0007_cfg_0005', 'cam_036422060215'),
-                 ('task_0070_user_0007_scene_0007_cfg_0005', 'cam_037522062165'),
-                 ('task_0101_user_0007_scene_0001_cfg_0005', 'cam_036422060215'),
-                 ('task_0101_user_0007_scene_0001_cfg_0005', 'cam_037522062165'),
-                 ('task_0101_user_0007_scene_0001_cfg_0005', 'cam_104122063678'),
-                 ('task_0101_user_0007_scene_0001_cfg_0005', 'cam_104422070044'),
-                 ('task_0101_user_0007_scene_0001_cfg_0005', 'cam_f0461559'),
-                 ('task_0105_user_0007_scene_0008_cfg_0005', 'cam_036422060215'),
-                 ('task_0105_user_0007_scene_0008_cfg_0005', 'cam_037522062165'),
-                 ('task_0105_user_0007_scene_0008_cfg_0005', 'cam_104122061850'),
-                 ('task_0105_user_0007_scene_0008_cfg_0005', 'cam_104122063678'),
-                 ('task_0105_user_0007_scene_0008_cfg_0005', 'cam_104422070044'),
-                 ('task_0105_user_0007_scene_0008_cfg_0005', 'cam_105422061350'),
-                 ('task_0105_user_0007_scene_0009_cfg_0005', 'cam_036422060215'),
-                 ('task_0105_user_0007_scene_0009_cfg_0005', 'cam_037522062165'),
-                 ('task_0105_user_0007_scene_0009_cfg_0005', 'cam_104122061850'),
-                 ('task_0105_user_0007_scene_0009_cfg_0005', 'cam_104122063678'),
-                 ('task_0105_user_0007_scene_0009_cfg_0005', 'cam_104422070044'),
-                 ('task_0105_user_0007_scene_0009_cfg_0005', 'cam_105422061350'),
-                 ('task_0105_user_0007_scene_0010_cfg_0005', 'cam_036422060215'),
-                 ('task_0105_user_0007_scene_0010_cfg_0005', 'cam_037522062165'),
-                 ('task_0105_user_0007_scene_0010_cfg_0005', 'cam_104122061850'),
-                 ('task_0105_user_0007_scene_0010_cfg_0005', 'cam_104122063678'),
-                 ('task_0105_user_0007_scene_0010_cfg_0005', 'cam_104422070044'),
-                 ('task_0105_user_0007_scene_0010_cfg_0005', 'cam_105422061350'),
-                 ('task_0106_user_0007_scene_0001_cfg_0005', 'cam_036422060215'),
-                 ('task_0106_user_0007_scene_0001_cfg_0005', 'cam_037522062165'),
-                 ('task_0106_user_0007_scene_0001_cfg_0005', 'cam_104122061850'),
-                 ('task_0106_user_0007_scene_0001_cfg_0005', 'cam_104122063678'),
-                 ('task_0106_user_0007_scene_0001_cfg_0005', 'cam_104422070044'),
-                 ('task_0106_user_0007_scene_0001_cfg_0005', 'cam_105422061350'),
-                 ('task_0106_user_0007_scene_0002_cfg_0005', 'cam_036422060215'),
-                 ('task_0106_user_0007_scene_0002_cfg_0005', 'cam_037522062165'),
-                 ('task_0106_user_0007_scene_0002_cfg_0005', 'cam_104122061850'),
-                 ('task_0106_user_0007_scene_0002_cfg_0005', 'cam_104122063678'),
-                 ('task_0106_user_0007_scene_0002_cfg_0005', 'cam_104422070044'),
-                 ('task_0106_user_0007_scene_0002_cfg_0005', 'cam_105422061350'),
-                 ('task_0106_user_0007_scene_0003_cfg_0005', 'cam_036422060215'),
-                 ('task_0106_user_0007_scene_0003_cfg_0005', 'cam_037522062165'),
-                 ('task_0106_user_0007_scene_0003_cfg_0005', 'cam_104122061850'),
-                 ('task_0106_user_0007_scene_0003_cfg_0005', 'cam_104122063678'),
-                 ('task_0106_user_0007_scene_0003_cfg_0005', 'cam_104422070044'),
-                 ('task_0106_user_0007_scene_0003_cfg_0005', 'cam_105422061350'),
-                 ('task_0106_user_0007_scene_0004_cfg_0005', 'cam_036422060215'),
-                 ('task_0106_user_0007_scene_0004_cfg_0005', 'cam_037522062165'),
-                 ('task_0106_user_0007_scene_0004_cfg_0005', 'cam_104122061850'),
-                 ('task_0106_user_0007_scene_0004_cfg_0005', 'cam_104122063678'),
-                 ('task_0106_user_0007_scene_0004_cfg_0005', 'cam_104422070044'),
-                 ('task_0106_user_0007_scene_0004_cfg_0005', 'cam_105422061350'),
-                 ('task_0106_user_0007_scene_0005_cfg_0005', 'cam_104422070044'),
-                 ('task_0106_user_0007_scene_0008_cfg_0005', 'cam_036422060215'),
-                 ('task_0106_user_0007_scene_0008_cfg_0005', 'cam_037522062165'),
-                 ('task_0106_user_0007_scene_0008_cfg_0005', 'cam_104122061850'),
-                 ('task_0106_user_0007_scene_0008_cfg_0005', 'cam_104122063678'),
-                 ('task_0106_user_0007_scene_0008_cfg_0005', 'cam_104422070044'),
-                 ('task_0106_user_0007_scene_0008_cfg_0005', 'cam_105422061350'),
-                 ('task_0106_user_0007_scene_0009_cfg_0005', 'cam_036422060215'),
-                 ('task_0106_user_0007_scene_0009_cfg_0005', 'cam_037522062165'),
-                 ('task_0106_user_0007_scene_0009_cfg_0005', 'cam_104122061850'),
-                 ('task_0106_user_0007_scene_0009_cfg_0005', 'cam_104122063678'),
-                 ('task_0106_user_0007_scene_0009_cfg_0005', 'cam_104422070044'),
-                 ('task_0106_user_0007_scene_0009_cfg_0005', 'cam_105422061350'),
-                 ('task_0106_user_0007_scene_0010_cfg_0005', 'cam_036422060215'),
-                 ('task_0106_user_0007_scene_0010_cfg_0005', 'cam_037522062165'),
-                 ('task_0106_user_0007_scene_0010_cfg_0005', 'cam_104122061850'),
-                 ('task_0106_user_0007_scene_0010_cfg_0005', 'cam_104122063678'),
-                 ('task_0106_user_0007_scene_0010_cfg_0005', 'cam_104422070044'),
-                 ('task_0106_user_0007_scene_0010_cfg_0005', 'cam_105422061350'),
-                 ('task_0107_user_0007_scene_0001_cfg_0005', 'cam_036422060215'),
-                 ('task_0107_user_0007_scene_0001_cfg_0005', 'cam_037522062165'),
-                 ('task_0107_user_0007_scene_0001_cfg_0005', 'cam_104122061850'),
-                 ('task_0107_user_0007_scene_0001_cfg_0005', 'cam_104122063678'),
-                 ('task_0107_user_0007_scene_0001_cfg_0005', 'cam_104422070044'),
-                 ('task_0107_user_0007_scene_0001_cfg_0005', 'cam_105422061350'),
-                 ('task_0107_user_0007_scene_0002_cfg_0005', 'cam_036422060215'),
-                 ('task_0107_user_0007_scene_0002_cfg_0005', 'cam_037522062165'),
-                 ('task_0107_user_0007_scene_0002_cfg_0005', 'cam_104122061850'),
-                 ('task_0107_user_0007_scene_0002_cfg_0005', 'cam_104122063678'),
-                 ('task_0107_user_0007_scene_0002_cfg_0005', 'cam_104422070044'),
-                 ('task_0107_user_0007_scene_0002_cfg_0005', 'cam_105422061350'),
-                 ('task_0107_user_0007_scene_0003_cfg_0005', 'cam_036422060215'),
-                 ('task_0107_user_0007_scene_0003_cfg_0005', 'cam_037522062165'),
-                 ('task_0107_user_0007_scene_0003_cfg_0005', 'cam_104122061850'),
-                 ('task_0107_user_0007_scene_0003_cfg_0005', 'cam_104122063678'),
-                 ('task_0107_user_0007_scene_0003_cfg_0005', 'cam_104422070044'),
-                 ('task_0107_user_0007_scene_0003_cfg_0005', 'cam_105422061350'),
-                 ('task_0107_user_0007_scene_0004_cfg_0005', 'cam_036422060215'),
-                 ('task_0107_user_0007_scene_0004_cfg_0005', 'cam_037522062165'),
-                 ('task_0107_user_0007_scene_0004_cfg_0005', 'cam_104122061850'),
-                 ('task_0107_user_0007_scene_0004_cfg_0005', 'cam_104122063678'),
-                 ('task_0107_user_0007_scene_0004_cfg_0005', 'cam_104422070044'),
-                 ('task_0107_user_0007_scene_0004_cfg_0005', 'cam_105422061350'),
-                 ('task_0107_user_0007_scene_0005_cfg_0005', 'cam_036422060215'),
-                 ('task_0107_user_0007_scene_0005_cfg_0005', 'cam_037522062165'),
-                 ('task_0107_user_0007_scene_0005_cfg_0005', 'cam_104122061850'),
-                 ('task_0107_user_0007_scene_0005_cfg_0005', 'cam_104122063678'),
-                 ('task_0107_user_0007_scene_0005_cfg_0005', 'cam_104422070044'),
-                 ('task_0107_user_0007_scene_0005_cfg_0005', 'cam_105422061350'),
-                 ('task_0107_user_0007_scene_0006_cfg_0005', 'cam_036422060215'),
-                 ('task_0107_user_0007_scene_0006_cfg_0005', 'cam_037522062165'),
-                 ('task_0107_user_0007_scene_0006_cfg_0005', 'cam_104122061850'),
-                 ('task_0107_user_0007_scene_0006_cfg_0005', 'cam_104122063678'),
-                 ('task_0107_user_0007_scene_0006_cfg_0005', 'cam_104422070044'),
-                 ('task_0107_user_0007_scene_0006_cfg_0005', 'cam_105422061350'),
-                 ('task_0107_user_0007_scene_0007_cfg_0005', 'cam_036422060215'),
-                 ('task_0107_user_0007_scene_0007_cfg_0005', 'cam_037522062165'),
-                 ('task_0107_user_0007_scene_0007_cfg_0005', 'cam_104122061850'),
-                 ('task_0107_user_0007_scene_0007_cfg_0005', 'cam_104122063678'),
-                 ('task_0107_user_0007_scene_0007_cfg_0005', 'cam_104422070044'),
-                 ('task_0107_user_0007_scene_0007_cfg_0005', 'cam_105422061350'),
-                 ('task_0107_user_0007_scene_0008_cfg_0005', 'cam_036422060215'),
-                 ('task_0107_user_0007_scene_0008_cfg_0005', 'cam_037522062165'),
-                 ('task_0107_user_0007_scene_0008_cfg_0005', 'cam_104122061850'),
-                 ('task_0107_user_0007_scene_0008_cfg_0005', 'cam_104122063678'),
-                 ('task_0107_user_0007_scene_0008_cfg_0005', 'cam_104422070044'),
-                 ('task_0107_user_0007_scene_0008_cfg_0005', 'cam_105422061350'),
-                 ('task_0107_user_0007_scene_0009_cfg_0005', 'cam_036422060215'),
-                 ('task_0107_user_0007_scene_0009_cfg_0005', 'cam_037522062165'),
-                 ('task_0107_user_0007_scene_0009_cfg_0005', 'cam_104122061850'),
-                 ('task_0107_user_0007_scene_0009_cfg_0005', 'cam_104122063678'),
-                 ('task_0107_user_0007_scene_0009_cfg_0005', 'cam_104422070044'),
-                 ('task_0107_user_0007_scene_0009_cfg_0005', 'cam_105422061350'),
-                 ('task_0107_user_0007_scene_0010_cfg_0005', 'cam_036422060215'),
-                 ('task_0107_user_0007_scene_0010_cfg_0005', 'cam_037522062165'),
-                 ('task_0107_user_0007_scene_0010_cfg_0005', 'cam_104122061850'),
-                 ('task_0107_user_0007_scene_0010_cfg_0005', 'cam_104122063678'),
-                 ('task_0107_user_0007_scene_0010_cfg_0005', 'cam_104422070044'),
-                 ('task_0107_user_0007_scene_0010_cfg_0005', 'cam_105422061350'),
-                 ('task_0108_user_0007_scene_0001_cfg_0005', 'cam_036422060215'),
-                 ('task_0108_user_0007_scene_0001_cfg_0005', 'cam_037522062165'),
-                 ('task_0108_user_0007_scene_0001_cfg_0005', 'cam_104122061850'),
-                 ('task_0108_user_0007_scene_0001_cfg_0005', 'cam_104122063678'),
-                 ('task_0108_user_0007_scene_0001_cfg_0005', 'cam_104422070044'),
-                 ('task_0108_user_0007_scene_0001_cfg_0005', 'cam_105422061350'),
-                 ('task_0108_user_0007_scene_0002_cfg_0005', 'cam_036422060215'),
-                 ('task_0108_user_0007_scene_0002_cfg_0005', 'cam_037522062165'),
-                 ('task_0108_user_0007_scene_0002_cfg_0005', 'cam_104122061850'),
-                 ('task_0108_user_0007_scene_0002_cfg_0005', 'cam_104122063678'),
-                 ('task_0108_user_0007_scene_0002_cfg_0005', 'cam_105422061350'),
-                 ('task_0108_user_0007_scene_0003_cfg_0005', 'cam_036422060215'),
-                 ('task_0108_user_0007_scene_0003_cfg_0005', 'cam_037522062165'),
-                 ('task_0108_user_0007_scene_0003_cfg_0005', 'cam_104122061850'),
-                 ('task_0108_user_0007_scene_0003_cfg_0005', 'cam_104122063678'),
-                 ('task_0108_user_0007_scene_0003_cfg_0005', 'cam_104422070044'),
-                 ('task_0108_user_0007_scene_0003_cfg_0005', 'cam_105422061350'),
-                 ('task_0108_user_0007_scene_0004_cfg_0005', 'cam_036422060215'),
-                 ('task_0108_user_0007_scene_0004_cfg_0005', 'cam_037522062165'),
-                 ('task_0108_user_0007_scene_0004_cfg_0005', 'cam_104122061850'),
-                 ('task_0108_user_0007_scene_0004_cfg_0005', 'cam_104122063678'),
-                 ('task_0108_user_0007_scene_0004_cfg_0005', 'cam_105422061350'),
-                 ('task_0108_user_0007_scene_0005_cfg_0005', 'cam_036422060215'),
-                 ('task_0108_user_0007_scene_0005_cfg_0005', 'cam_037522062165'),
-                 ('task_0108_user_0007_scene_0005_cfg_0005', 'cam_104122061850'),
-                 ('task_0108_user_0007_scene_0005_cfg_0005', 'cam_104122063678'),
-                 ('task_0108_user_0007_scene_0005_cfg_0005', 'cam_104422070044'),
-                 ('task_0108_user_0007_scene_0005_cfg_0005', 'cam_105422061350'),
-                 ('task_0108_user_0007_scene_0006_cfg_0005', 'cam_036422060215'),
-                 ('task_0108_user_0007_scene_0006_cfg_0005', 'cam_037522062165'),
-                 ('task_0108_user_0007_scene_0006_cfg_0005', 'cam_104122061850'),
-                 ('task_0108_user_0007_scene_0006_cfg_0005', 'cam_104122063678'),
-                 ('task_0108_user_0007_scene_0006_cfg_0005', 'cam_104422070044'),
-                 ('task_0108_user_0007_scene_0006_cfg_0005', 'cam_105422061350'),
-                 ('task_0108_user_0007_scene_0007_cfg_0005', 'cam_036422060215'),
-                 ('task_0108_user_0007_scene_0007_cfg_0005', 'cam_037522062165'),
-                 ('task_0108_user_0007_scene_0007_cfg_0005', 'cam_104122061850'),
-                 ('task_0108_user_0007_scene_0007_cfg_0005', 'cam_104122063678'),
-                 ('task_0108_user_0007_scene_0007_cfg_0005', 'cam_105422061350'),
-                 ('task_0108_user_0007_scene_0008_cfg_0005', 'cam_036422060215'),
-                 ('task_0108_user_0007_scene_0008_cfg_0005', 'cam_037522062165'),
-                 ('task_0108_user_0007_scene_0008_cfg_0005', 'cam_104122061850'),
-                 ('task_0108_user_0007_scene_0008_cfg_0005', 'cam_104122063678'),
-                 ('task_0108_user_0007_scene_0008_cfg_0005', 'cam_104422070044'),
-                 ('task_0108_user_0007_scene_0008_cfg_0005', 'cam_105422061350'),
-                 ('task_0108_user_0007_scene_0009_cfg_0005', 'cam_036422060215'),
-                 ('task_0108_user_0007_scene_0009_cfg_0005', 'cam_037522062165'),
-                 ('task_0108_user_0007_scene_0009_cfg_0005', 'cam_104122061850'),
-                 ('task_0108_user_0007_scene_0009_cfg_0005', 'cam_104122063678'),
-                 ('task_0108_user_0007_scene_0009_cfg_0005', 'cam_104422070044'),
-                 ('task_0108_user_0007_scene_0009_cfg_0005', 'cam_105422061350'),
-                 ('task_0108_user_0007_scene_0010_cfg_0005', 'cam_036422060215'),
-                 ('task_0108_user_0007_scene_0010_cfg_0005', 'cam_037522062165'),
-                 ('task_0108_user_0007_scene_0010_cfg_0005', 'cam_104122061850'),
-                 ('task_0108_user_0007_scene_0010_cfg_0005', 'cam_104122063678'),
-                 ('task_0108_user_0007_scene_0010_cfg_0005', 'cam_104422070044'),
-                 ('task_0108_user_0007_scene_0010_cfg_0005', 'cam_105422061350'),
-                 ('task_0109_user_0007_scene_0001_cfg_0005', 'cam_036422060215'),
-                 ('task_0109_user_0007_scene_0001_cfg_0005', 'cam_037522062165'),
-                 ('task_0109_user_0007_scene_0001_cfg_0005', 'cam_104122061850'),
-                 ('task_0109_user_0007_scene_0001_cfg_0005', 'cam_104122063678'),
-                 ('task_0109_user_0007_scene_0001_cfg_0005', 'cam_104422070044'),
-                 ('task_0109_user_0007_scene_0001_cfg_0005', 'cam_105422061350'),
-                 ('task_0109_user_0007_scene_0002_cfg_0005', 'cam_036422060215'),
-                 ('task_0109_user_0007_scene_0002_cfg_0005', 'cam_037522062165'),
-                 ('task_0109_user_0007_scene_0002_cfg_0005', 'cam_104122061850'),
-                 ('task_0109_user_0007_scene_0002_cfg_0005', 'cam_104122063678'),
-                 ('task_0109_user_0007_scene_0002_cfg_0005', 'cam_104422070044'),
-                 ('task_0109_user_0007_scene_0002_cfg_0005', 'cam_105422061350'),
-                 ('task_0109_user_0007_scene_0003_cfg_0005', 'cam_036422060215'),
-                 ('task_0109_user_0007_scene_0003_cfg_0005', 'cam_037522062165'),
-                 ('task_0109_user_0007_scene_0003_cfg_0005', 'cam_104122061850'),
-                 ('task_0109_user_0007_scene_0003_cfg_0005', 'cam_104122063678'),
-                 ('task_0109_user_0007_scene_0003_cfg_0005', 'cam_105422061350'),
-                 ('task_0109_user_0007_scene_0004_cfg_0005', 'cam_036422060215'),
-                 ('task_0109_user_0007_scene_0004_cfg_0005', 'cam_037522062165'),
-                 ('task_0109_user_0007_scene_0004_cfg_0005', 'cam_104122061850'),
-                 ('task_0109_user_0007_scene_0004_cfg_0005', 'cam_104122063678'),
-                 ('task_0109_user_0007_scene_0004_cfg_0005', 'cam_104422070044'),
-                 ('task_0109_user_0007_scene_0004_cfg_0005', 'cam_105422061350'),
-                 ('task_0109_user_0007_scene_0005_cfg_0005', 'cam_036422060215'),
-                 ('task_0109_user_0007_scene_0005_cfg_0005', 'cam_037522062165'),
-                 ('task_0109_user_0007_scene_0005_cfg_0005', 'cam_104122061850'),
-                 ('task_0109_user_0007_scene_0005_cfg_0005', 'cam_104122063678'),
-                 ('task_0109_user_0007_scene_0005_cfg_0005', 'cam_104422070044'),
-                 ('task_0109_user_0007_scene_0005_cfg_0005', 'cam_105422061350'),
-                 ('task_0109_user_0007_scene_0006_cfg_0005', 'cam_036422060215'),
-                 ('task_0109_user_0007_scene_0006_cfg_0005', 'cam_037522062165'),
-                 ('task_0109_user_0007_scene_0006_cfg_0005', 'cam_104122061850'),
-                 ('task_0109_user_0007_scene_0006_cfg_0005', 'cam_104122063678'),
-                 ('task_0109_user_0007_scene_0006_cfg_0005', 'cam_105422061350'),
-                 ('task_0109_user_0007_scene_0007_cfg_0005', 'cam_036422060215'),
-                 ('task_0109_user_0007_scene_0007_cfg_0005', 'cam_037522062165'),
-                 ('task_0109_user_0007_scene_0007_cfg_0005', 'cam_104122061850'),
-                 ('task_0109_user_0007_scene_0007_cfg_0005', 'cam_104122063678'),
-                 ('task_0109_user_0007_scene_0007_cfg_0005', 'cam_104422070044'),
-                 ('task_0109_user_0007_scene_0007_cfg_0005', 'cam_105422061350'),
-                 ('task_0109_user_0007_scene_0008_cfg_0005', 'cam_036422060215'),
-                 ('task_0109_user_0007_scene_0008_cfg_0005', 'cam_037522062165'),
-                 ('task_0109_user_0007_scene_0008_cfg_0005', 'cam_104122061850'),
-                 ('task_0109_user_0007_scene_0008_cfg_0005', 'cam_104122063678'),
-                 ('task_0109_user_0007_scene_0008_cfg_0005', 'cam_104422070044'),
-                 ('task_0109_user_0007_scene_0008_cfg_0005', 'cam_105422061350'),
-                 ('task_0109_user_0007_scene_0009_cfg_0005', 'cam_036422060215'),
-                 ('task_0109_user_0007_scene_0009_cfg_0005', 'cam_037522062165'),
-                 ('task_0109_user_0007_scene_0009_cfg_0005', 'cam_104122061850'),
-                 ('task_0109_user_0007_scene_0009_cfg_0005', 'cam_104122063678'),
-                 ('task_0109_user_0007_scene_0009_cfg_0005', 'cam_104422070044'),
-                 ('task_0109_user_0007_scene_0009_cfg_0005', 'cam_105422061350'),
-                 ('task_0109_user_0007_scene_0010_cfg_0005', 'cam_036422060215'),
-                 ('task_0109_user_0007_scene_0010_cfg_0005', 'cam_037522062165'),
-                 ('task_0109_user_0007_scene_0010_cfg_0005', 'cam_104122061850'),
-                 ('task_0109_user_0007_scene_0010_cfg_0005', 'cam_104122063678'),
-                 ('task_0109_user_0007_scene_0010_cfg_0005', 'cam_104422070044'),
-                 ('task_0109_user_0007_scene_0010_cfg_0005', 'cam_105422061350'),
-                 ('task_0110_user_0007_scene_0001_cfg_0005', 'cam_036422060215'),
-                 ('task_0110_user_0007_scene_0001_cfg_0005', 'cam_037522062165'),
-                 ('task_0110_user_0007_scene_0001_cfg_0005', 'cam_104122061850'),
-                 ('task_0110_user_0007_scene_0001_cfg_0005', 'cam_104122063678'),
-                 ('task_0110_user_0007_scene_0001_cfg_0005', 'cam_104422070044'),
-                 ('task_0110_user_0007_scene_0001_cfg_0005', 'cam_105422061350'),
-                 ('task_0110_user_0007_scene_0002_cfg_0005', 'cam_036422060215'),
-                 ('task_0110_user_0007_scene_0002_cfg_0005', 'cam_037522062165'),
-                 ('task_0110_user_0007_scene_0002_cfg_0005', 'cam_104122061850'),
-                 ('task_0110_user_0007_scene_0002_cfg_0005', 'cam_104122063678'),
-                 ('task_0110_user_0007_scene_0002_cfg_0005', 'cam_104422070044'),
-                 ('task_0110_user_0007_scene_0002_cfg_0005', 'cam_105422061350'),
-                 ('task_0110_user_0007_scene_0003_cfg_0005', 'cam_036422060215'),
-                 ('task_0110_user_0007_scene_0003_cfg_0005', 'cam_037522062165'),
-                 ('task_0110_user_0007_scene_0003_cfg_0005', 'cam_104122061850'),
-                 ('task_0110_user_0007_scene_0003_cfg_0005', 'cam_104122063678'),
-                 ('task_0110_user_0007_scene_0003_cfg_0005', 'cam_104422070044'),
-                 ('task_0110_user_0007_scene_0003_cfg_0005', 'cam_105422061350'),
-                 ('task_0110_user_0007_scene_0004_cfg_0005', 'cam_036422060215'),
-                 ('task_0110_user_0007_scene_0004_cfg_0005', 'cam_037522062165'),
-                 ('task_0110_user_0007_scene_0004_cfg_0005', 'cam_104122061850'),
-                 ('task_0110_user_0007_scene_0004_cfg_0005', 'cam_104122063678'),
-                 ('task_0110_user_0007_scene_0004_cfg_0005', 'cam_104422070044'),
-                 ('task_0110_user_0007_scene_0004_cfg_0005', 'cam_105422061350'),
-                 ('task_0110_user_0007_scene_0005_cfg_0005', 'cam_036422060215'),
-                 ('task_0110_user_0007_scene_0005_cfg_0005', 'cam_037522062165'),
-                 ('task_0110_user_0007_scene_0005_cfg_0005', 'cam_104122061850'),
-                 ('task_0110_user_0007_scene_0005_cfg_0005', 'cam_104122063678'),
-                 ('task_0110_user_0007_scene_0005_cfg_0005', 'cam_104422070044'),
-                 ('task_0110_user_0007_scene_0005_cfg_0005', 'cam_105422061350'),
-                 ('task_0110_user_0007_scene_0006_cfg_0005', 'cam_036422060215'),
-                 ('task_0110_user_0007_scene_0006_cfg_0005', 'cam_037522062165'),
-                 ('task_0110_user_0007_scene_0006_cfg_0005', 'cam_104122061850'),
-                 ('task_0110_user_0007_scene_0006_cfg_0005', 'cam_104122063678'),
-                 ('task_0110_user_0007_scene_0006_cfg_0005', 'cam_104422070044'),
-                 ('task_0110_user_0007_scene_0006_cfg_0005', 'cam_105422061350'),
-                 ('task_0110_user_0007_scene_0007_cfg_0005', 'cam_036422060215'),
-                 ('task_0110_user_0007_scene_0007_cfg_0005', 'cam_037522062165'),
-                 ('task_0110_user_0007_scene_0007_cfg_0005', 'cam_104122061850'),
-                 ('task_0110_user_0007_scene_0007_cfg_0005', 'cam_104122063678'),
-                 ('task_0110_user_0007_scene_0007_cfg_0005', 'cam_104422070044'),
-                 ('task_0110_user_0007_scene_0007_cfg_0005', 'cam_105422061350'),
-                 ('task_0110_user_0007_scene_0008_cfg_0005', 'cam_036422060215'),
-                 ('task_0110_user_0007_scene_0008_cfg_0005', 'cam_037522062165'),
-                 ('task_0110_user_0007_scene_0008_cfg_0005', 'cam_104122061850'),
-                 ('task_0110_user_0007_scene_0008_cfg_0005', 'cam_104122063678'),
-                 ('task_0110_user_0007_scene_0008_cfg_0005', 'cam_104422070044'),
-                 ('task_0110_user_0007_scene_0008_cfg_0005', 'cam_105422061350'),
-                 ('task_0110_user_0007_scene_0009_cfg_0005', 'cam_036422060215'),
-                 ('task_0110_user_0007_scene_0009_cfg_0005', 'cam_037522062165'),
-                 ('task_0110_user_0007_scene_0009_cfg_0005', 'cam_104122061850'),
-                 ('task_0110_user_0007_scene_0009_cfg_0005', 'cam_104122063678'),
-                 ('task_0110_user_0007_scene_0009_cfg_0005', 'cam_104422070044'),
-                 ('task_0110_user_0007_scene_0009_cfg_0005', 'cam_105422061350'),
-                 ('task_0110_user_0007_scene_0010_cfg_0005', 'cam_036422060215'),
-                 ('task_0110_user_0007_scene_0010_cfg_0005', 'cam_037522062165'),
-                 ('task_0110_user_0007_scene_0010_cfg_0005', 'cam_104122061850'),
-                 ('task_0110_user_0007_scene_0010_cfg_0005', 'cam_104122063678'),
-                 ('task_0110_user_0007_scene_0010_cfg_0005', 'cam_104422070044'),
-                 ('task_0110_user_0007_scene_0010_cfg_0005', 'cam_105422061350'),
-                 ('task_0111_user_0007_scene_0001_cfg_0005', 'cam_036422060215'),
-                 ('task_0111_user_0007_scene_0001_cfg_0005', 'cam_037522062165'),
-                 ('task_0111_user_0007_scene_0001_cfg_0005', 'cam_104122061850'),
-                 ('task_0111_user_0007_scene_0001_cfg_0005', 'cam_104122063678'),
-                 ('task_0111_user_0007_scene_0001_cfg_0005', 'cam_104422070044'),
-                 ('task_0111_user_0007_scene_0001_cfg_0005', 'cam_105422061350'),
-                 ('task_0111_user_0007_scene_0002_cfg_0005', 'cam_036422060215'),
-                 ('task_0111_user_0007_scene_0002_cfg_0005', 'cam_037522062165'),
-                 ('task_0111_user_0007_scene_0002_cfg_0005', 'cam_104122061850'),
-                 ('task_0111_user_0007_scene_0002_cfg_0005', 'cam_104122063678'),
-                 ('task_0111_user_0007_scene_0002_cfg_0005', 'cam_105422061350'),
-                 ('task_0111_user_0007_scene_0003_cfg_0005', 'cam_036422060215'),
-                 ('task_0111_user_0007_scene_0003_cfg_0005', 'cam_037522062165'),
-                 ('task_0111_user_0007_scene_0003_cfg_0005', 'cam_104122061850'),
-                 ('task_0111_user_0007_scene_0003_cfg_0005', 'cam_104122063678'),
-                 ('task_0111_user_0007_scene_0003_cfg_0005', 'cam_104422070044'),
-                 ('task_0111_user_0007_scene_0003_cfg_0005', 'cam_105422061350'),
-                 ('task_0111_user_0007_scene_0004_cfg_0005', 'cam_036422060215'),
-                 ('task_0111_user_0007_scene_0004_cfg_0005', 'cam_037522062165'),
-                 ('task_0111_user_0007_scene_0004_cfg_0005', 'cam_104122061850'),
-                 ('task_0111_user_0007_scene_0004_cfg_0005', 'cam_104122063678'),
-                 ('task_0111_user_0007_scene_0004_cfg_0005', 'cam_104422070044'),
-                 ('task_0111_user_0007_scene_0004_cfg_0005', 'cam_105422061350'),
-                 ('task_0111_user_0007_scene_0005_cfg_0005', 'cam_036422060215'),
-                 ('task_0111_user_0007_scene_0005_cfg_0005', 'cam_037522062165'),
-                 ('task_0111_user_0007_scene_0005_cfg_0005', 'cam_104122061850'),
-                 ('task_0111_user_0007_scene_0005_cfg_0005', 'cam_104122063678'),
-                 ('task_0111_user_0007_scene_0005_cfg_0005', 'cam_105422061350'),
-                 ('task_0111_user_0007_scene_0006_cfg_0005', 'cam_036422060215'),
-                 ('task_0111_user_0007_scene_0006_cfg_0005', 'cam_037522062165'),
-                 ('task_0111_user_0007_scene_0006_cfg_0005', 'cam_104122061850'),
-                 ('task_0111_user_0007_scene_0006_cfg_0005', 'cam_104122063678'),
-                 ('task_0111_user_0007_scene_0006_cfg_0005', 'cam_104422070044'),
-                 ('task_0111_user_0007_scene_0006_cfg_0005', 'cam_105422061350'),
-                 ('task_0111_user_0007_scene_0007_cfg_0005', 'cam_036422060215'),
-                 ('task_0111_user_0007_scene_0007_cfg_0005', 'cam_037522062165'),
-                 ('task_0111_user_0007_scene_0007_cfg_0005', 'cam_104122061850'),
-                 ('task_0111_user_0007_scene_0007_cfg_0005', 'cam_104122063678'),
-                 ('task_0111_user_0007_scene_0007_cfg_0005', 'cam_104422070044'),
-                 ('task_0111_user_0007_scene_0007_cfg_0005', 'cam_105422061350'),
-                 ('task_0111_user_0007_scene_0008_cfg_0005', 'cam_036422060215'),
-                 ('task_0111_user_0007_scene_0008_cfg_0005', 'cam_037522062165'),
-                 ('task_0111_user_0007_scene_0008_cfg_0005', 'cam_104122061850'),
-                 ('task_0111_user_0007_scene_0008_cfg_0005', 'cam_104122063678'),
-                 ('task_0111_user_0007_scene_0008_cfg_0005', 'cam_104422070044'),
-                 ('task_0111_user_0007_scene_0008_cfg_0005', 'cam_105422061350'),
-                 ('task_0021_user_0014_scene_0009_cfg_0006', 'cam_104122064161'),
-                 ('task_0077_user_0014_scene_0010_cfg_0006', 'cam_104122061018'),
-                 ('task_0105_user_0014_scene_0006_cfg_0006', 'cam_104122064161'),
-                 ('task_0205_user_0007_scene_0001_cfg_0006', 'cam_104122060811')]
-IGNORED_TASKS = ['task_0040', 'task_0093', 'task_0095', 'task_0112', 'task_0116', 'task_0129', 'task_0130', 'task_0131', 'task_0132', 'task_0213', 'task_0214', 'task_0215', 'task_0216', 'task_0217', 'task_0218', 'task_0220', 'task_0221', 'task_0222', 'task_0223', 'task_0225', 'task_0226', 'task_0329']
-PICK_PLACE_TASKS = ['task_0008', 'task_0009', 'task_0010', 'task_0011', 'task_0012', 'task_0013', 'task_0014', 'task_0017', 'task_0028', 'task_0029', 'task_0031', 'task_0035', 'task_0037', 'task_0038', 'task_0040', 'task_0044', 'task_0045', 'task_0046', 'task_0047', 'task_0050', 'task_0051', 'task_0052', 'task_0054', 'task_0056', 'task_0061', 'task_0062', 'task_0064', 'task_0072', 'task_0073', 'task_0076', 'task_0077', 'task_0088', 'task_0093', 'task_0095', 'task_0096', 'task_0105', 'task_0106', 'task_0107', 'task_0122', 'task_0123', 'task_0222']
-FINETUNE_TASKS = ['task_0013', 'task_0014', 'task_0015', 'task_0016', 'task_0022', 'task_0028', 'task_0029', 'task_0031', 'task_0032', 'task_0037', 'task_0053', 'task_0062', 'task_0078', 'task_0079']
-GRASP_TASKS = ['task_0501', 'task_0502', 'task_0503', 'task_0504', 'task_0505', 'task_0506', 'task_0507', 'task_0508', 'task_0509', 'task_0510']
-# IGNORED_TASKS = []
-# ABANDONED_TASKS = ['task_0220', 'task_0221', 'task_0223']
+# TO_TENSOR_KEYS = ['language_embed', 'language_mask', 'top_image_list', 'wrist_image_list', 'input_frame_tcp_normalized', 'target_frame_tcp_normalized', 'padding_mask']
 
+TO_TENSOR_KEYS = ['top_image_list', 'wrist_image_list', 'input_frame_action_normalized', 'target_frame_action_normalized', 'padding_mask']
 
 class RH100TDataset(Dataset):
-    def __init__(self, root, task_config_list, split='train', task_descriptions=None, num_input=1, horizon=1+20, timestep=-1, filter_frames=False, filter_thresh=None, image_mean=[0.485, 0.456, 0.406], image_std=[0.229, 0.224, 0.225], voxel_size=0.005, intrinsics_path='dataset/camera_intrinsics.npy', augmentation=False, frame_sample_step=1, centralize_gripper=False, tcp_mode='camera', num_sample='all', rot_6d=False, wrist_cam_id=None):
+    def __init__(
+        self, 
+        root, 
+        task_config_list, 
+        split='train', 
+        num_input=1, 
+        horizon=1+20, 
+        timestep=-1, 
+        filter_thresh=None, 
+        image_mean=[0.485, 0.456, 0.406], 
+        image_std=[0.229, 0.224, 0.225], 
+        voxel_size=0.005, 
+        augmentation=False, 
+        frame_sample_step=1, 
+        centralize_gripper=False, 
+        tcp_mode='camera', 
+        num_sample='all', 
+        rot_6d=False, 
+        wrist_cam_id=None
+        ):
         assert split in ['train', 'val', 'all']
         assert tcp_mode in ['base', 'camera']
         assert num_sample in ['all', '10', '39']
 
         self.root = root
         self.split = split
-        self.task_descriptions = task_descriptions
         self.num_input = num_input
         self.horizon = horizon
-        self.filter_frames = filter_frames
         self.filter_thresh = filter_thresh if filter_thresh is not None else\
                             {'translation': 0.005, 'rotation': np.pi/12, 'gripper_width': 0.005}
         self.image_mean = np.array(image_mean, dtype=np.float32)
@@ -689,7 +65,9 @@ class RH100TDataset(Dataset):
         self.wrist_frame_ids = []
         self.padding_mask_list = []
         
-        self.task_ids, self.cam_ids, self.task_configs = load_real_tasks(root, task_config_list, split)
+        self.task_ids, self.cam_ids = load_real_tasks(root, task_config_list, split)
+
+
         if split == 'val':
             self.task_ids = self.task_ids[::10]
             self.cam_ids = self.cam_ids[::10]
@@ -715,57 +93,22 @@ class RH100TDataset(Dataset):
 
         unique_cam_ids = []
         for i in tqdm(range(num_tasks), desc='loading data samples...'):
-            task_id, cam_id, task_config = self.task_ids[i], self.cam_ids[i], self.task_configs[i]
-            # if (task_id, cam_id) in PROBLEM_TASKS: continue
-            # print(task_id, cam_id)
-            meta_path = os.path.join(self.root, split, task_id, 'metadata.json')
-            metadata = json.load(open(meta_path))
-            frame_ids = os.listdir(os.path.join(self.root, split, task_id, cam_id, 'color'))
-            frame_ids = [int(x.split('.')[0]) for x in frame_ids]
-            frame_ids = [x for x in frame_ids if x <= metadata['finish_time']]
+            task_id, cam_id = self.task_ids[i], self.cam_ids[i]
+
+            frame_ids = sorted(os.listdir(os.path.join(self.root, task_id, cam_id)))
+            
+            # print(frame_ids)
+
+            frame_ids = [int(x.split('.')[0].split('_')[-1]) for x in frame_ids]
+
             target_frame_ids, padding_mask_list = self._get_input_output_frame_id_lists(frame_ids, num_input=num_input, horizon=horizon, timestep=timestep, frame_sample_step=frame_sample_step)
-            # add wrist image
-            if wrist_cam_id is not None:
-                wrist_frame_ids =  os.listdir(os.path.join(self.root, split, task_id, wrist_cam_id, 'color'))
-                wrist_frame_ids = [int(x.split('.')[0]) for x in wrist_frame_ids]
-                input_frame_ids = frame_ids[:len(target_frame_ids)]
-                input_frame_ids_array = np.array(input_frame_ids)
-                wrist_frame_ids_array = np.array(wrist_frame_ids)
-                frame_dists = np.abs(input_frame_ids_array[:,np.newaxis] - wrist_frame_ids_array[np.newaxis,:])
-                reference_id = np.argmin(frame_dists, axis=1)
-                wrist_frame_ids_array = wrist_frame_ids_array[reference_id]
-                self.wrist_frame_ids += wrist_frame_ids_array.tolist()
             self.target_frame_ids += target_frame_ids
             self.padding_mask_list += padding_mask_list
             self.input_task_ids += [task_id] * len(target_frame_ids)
             self.input_cam_ids += [cam_id] * len(target_frame_ids)
-            self.input_task_configs += [task_config] * len(target_frame_ids)
+            # self.input_task_configs += [task_config] * len(target_frame_ids)
             if cam_id not in unique_cam_ids:
                 unique_cam_ids.append(cam_id)
-
-        # prepare language embeddings
-        # print('Loading CLIP model...')
-        # self.task_descriptions = self._load_language_embeddings(self.task_descriptions)
-
-    # def _load_language_embeddings(self, task_descriptions):
-    #     clip_model, preprocess = clip.load('RN50', device='cpu') # CLIP-ResNet50
-    #     for task_name in tqdm(task_descriptions, desc="Embedding language conditions..."):
-    #         tokens = clip.tokenize([task_descriptions[task_name]['task_description_english']])
-    #         # encode text
-    #         embed = clip_model.token_embedding(tokens).type(clip_model.dtype)
-    #         embed = embed + clip_model.positional_embedding.type(clip_model.dtype)
-    #         embed = embed.permute(1, 0, 2)  # NLD -> LND
-    #         embed = clip_model.transformer(embed)
-    #         embed = embed.permute(1, 0, 2)  # LND -> NLD
-    #         embed = clip_model.ln_final(embed).type(clip_model.dtype)
-
-    #         token_mask = torch.full([tokens.size(-1)], True)
-    #         token_mask[:tokens.argmax(dim=-1)+1] = False
-    #         task_descriptions[task_name]['embedding'] = embed[0].detach().numpy()
-    #         task_descriptions[task_name]['token_mask'] = token_mask.numpy()
-
-    #     del clip_model
-    #     return task_descriptions
 
     def __len__(self):
         return len(self.target_frame_ids)
@@ -774,11 +117,6 @@ class RH100TDataset(Dataset):
         color_dir = os.path.join(self.root, task_config, task_id, cam_id, 'color')
         frame_ids = sorted(os.listdir(color_dir))
         frame_ids = [int(x.split('.')[0]) for x in frame_ids]
-
-        if self.filter_frames:
-            tcps, gripper_widths = self._get_scene_gripper_poses(task_id, cam_id, task_config)
-            kept_frame_indices = self._filter_scene_frames(tcps, gripper_widths)
-            frame_ids = [frame_ids[x] for x in kept_frame_indices]
 
         if finish_time is not None:
             frame_ids = [x for x in frame_ids if x <= finish_time]
@@ -906,24 +244,31 @@ class RH100TDataset(Dataset):
 
         return target_frame_ids, padding_mask_list
 
-    def _clip_tcp(self, tcp_list):
-        ''' tcp_list: [T, 8]'''
-        tcp_list[:,0] = np.clip(tcp_list[:,0], 0, 1)
-        tcp_list[:,1] = np.clip(tcp_list[:,1], -0.5, 0.5)
-        tcp_list[:,2] = np.clip(tcp_list[:,2], 0, 0.3)
-        tcp_list[:,7] = np.clip(tcp_list[:,7], 0, 0.11)
-        return tcp_list
+    # def _clip_tcp(self, tcp_list):
+    #     ''' tcp_list: [T, 8]'''
+    #     tcp_list[:,0] = np.clip(tcp_list[:,0], 0, 1)
+    #     tcp_list[:,1] = np.clip(tcp_list[:,1], -0.5, 0.5)
+    #     tcp_list[:,2] = np.clip(tcp_list[:,2], 0, 0.3)
+    #     tcp_list[:,7] = np.clip(tcp_list[:,7], 0, 0.11)
+    #     return tcp_list
 
-    def _normalize_tcp(self, tcp_list):
-        ''' tcp_list: [T, 8]'''
-        trans_min, trans_max = np.array([0, -0.5, 0]), np.array([1.0, 0.5, 0.3]) # for base frame
-        max_gripper_width = 0.11 # meter
-        tcp_list[:,:3] = (tcp_list[:,:3] - trans_min) / (trans_max - trans_min) * 2 - 1
-        tcp_list[:,7] = tcp_list[:,7] / max_gripper_width * 2 - 1
-        return tcp_list
+    # def _normalize_tcp(self, tcp_list):
+    #     ''' tcp_list: [T, 8]'''
+    #     trans_min, trans_max = np.array([0, -0.5, 0]), np.array([1.0, 0.5, 0.3]) # for base frame
+    #     max_gripper_width = 0.11 # meter
+    #     tcp_list[:,:3] = (tcp_list[:,:3] - trans_min) / (trans_max - trans_min) * 2 - 1
+    #     tcp_list[:,7] = tcp_list[:,7] / max_gripper_width * 2 - 1
+    #     return tcp_list
+
+    def _normalize_action(self, action_list):
+        ''' action_list: [T, 13]'''
+        joint_min = np.array([-2*np.pi, -2*np.pi, -2*np.pi, -2*np.pi, -2*np.pi, -2*np.pi, -2*np.pi])
+        joint_max = np.array([2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi])
+        action_list[:,:7] = (action_list[:,:7] - joint_min) / (joint_max - joint_min) * 2 - 1
+        return action_list
 
     def load_image(self, task_id, cam_id, frame_id):
-        color_path = os.path.join(self.root, self.split, task_id, cam_id, 'color', '%d.png'%frame_id)
+        color_path = os.path.join(self.root, task_id, cam_id, 'frame_%03d.png'%frame_id)
         colors = np.array(Image.open(color_path), dtype=np.float32) / 255.0
         # imagenet normalization
         colors = (colors - self.image_mean) / self.image_std
@@ -943,28 +288,44 @@ class RH100TDataset(Dataset):
         target_frame_ids = self.target_frame_ids[index]
         padding_mask = self.padding_mask_list[index]
         cam_id = self.input_cam_ids[index]
-        task_config = self.input_task_configs[index]
+        # task_config = self.input_task_configs[index]
         # tcp_list = self.tcp_dicts[task_id][cam_id[4:]]
         # gripper_list = self.gripper_dicts[task_id][cam_id[4:]]
 
-        gripper_info_dir = os.path.join(self.root, self.split, task_id, cam_id, 'gripper_info')
-        gripper_command_dir = os.path.join(self.root, self.split, task_id, cam_id, 'gripper_command')
-        tcp_dir = os.path.join(self.root, self.split, task_id, cam_id, 'tcp')
+        # gripper_info_dir = os.path.join(self.root, self.split, task_id, cam_id, 'gripper_info')
+        # gripper_command_dir = os.path.join(self.root, self.split, task_id, cam_id, 'gripper_command')
+        # tcp_dir = os.path.join(self.root, self.split, task_id, cam_id, 'tcp')
+        
+        states = torch.load(os.path.join(self.root, task_id, 'states.pt'))
+        
 
         # load input and target gripper pose and gripper width
-        target_frame_tcp_list = []
-        target_gripper_width_list = []
+        # target_frame_tcp_list = []
+        # target_gripper_width_list = []
+        states_traj = states['traj_0']
+        states_traj_actions = states_traj['actions']
+        states_traj_actions_right_arm = states_traj_actions['right_arm']
+
+        target_joint_list = []
+        target_hand_qpos_list = []
         for i,fid in enumerate(target_frame_ids):
-            tcp_path = os.path.join(tcp_dir, '%d.npy'%fid)
-            target_frame_tcp_list.append(np.load(tcp_path))
-            if i < self.num_input:
-                gripper_path = os.path.join(gripper_info_dir, '%d.npy'%fid)
-            else:
-                gripper_path = os.path.join(gripper_command_dir, '%d.npy'%fid)
-            gripper_state = np.load(gripper_path)
-            gripper_width = decode_gripper_width(gripper_state, task_config)
-            target_gripper_width_list.append(gripper_width)
-        target_frame_tcp_list = np.array(target_frame_tcp_list, dtype=np.float32)
+            # tcp_path = os.path.join(tcp_dir, '%d.npy'%fid)
+            # target_frame_tcp_list.append(np.load(tcp_path))
+            if fid == states_traj_actions_right_arm.shape[0]:
+                fid = states_traj_actions_right_arm.shape[0] - 1
+            target_joint_list.append(states_traj_actions_right_arm[fid][:7])
+            # if i < self.num_input:
+            #     gripper_path = os.path.join(gripper_info_dir, '%d.npy'%fid)
+            # else:
+            #     gripper_path = os.path.join(gripper_command_dir, '%d.npy'%fid)
+            # gripper_state = np.load(gripper_path)
+            # gripper_width = decode_gripper_width(gripper_state, task_config)
+            # target_gripper_width_list.append(gripper_width)
+            target_hand_qpos_list.append(states_traj_actions_right_arm[fid][7:])
+        # target_frame_tcp_list = np.array(target_frame_tcp_list, dtype=np.float32)
+        target_joint_list = np.array(target_joint_list, dtype=np.float32)
+        target_hand_qpos_list = np.array(target_hand_qpos_list, dtype=np.float32)
+
 
         # load input rgbs
         top_image_list = []
@@ -979,7 +340,6 @@ class RH100TDataset(Dataset):
                 wrist_image = self.resize_image(wrist_image)
                 wrist_image_list.append(wrist_image)
         top_image_list = np.stack(top_image_list, axis=0)
-        wrist_image_list = np.stack(wrist_image_list, axis=0)
 
         # # visualization
         # points_vis = input_cloud_list[0]
@@ -990,57 +350,63 @@ class RH100TDataset(Dataset):
         # cloud_vis.colors = o3d.utility.Vector3dVector(points_vis[:,3:]*self.image_std+self.image_mean)
         # o3d.visualization.draw_geometries([cloud_vis.voxel_down_sample(0.005), tcp_vis])
 
-        target_gripper_width_list = np.array(target_gripper_width_list, dtype=np.float32)[:,np.newaxis]
-        target_frame_tcp_list = np.concatenate([target_frame_tcp_list, target_gripper_width_list], axis=-1)
+        # target_gripper_width_list = np.array(target_gripper_width_list, dtype=np.float32)[:,np.newaxis]
+        # target_frame_tcp_list = np.concatenate([target_frame_tcp_list, target_gripper_width_list], axis=-1)
 
+        target_action_list = np.concatenate([target_joint_list, target_hand_qpos_list], axis=-1)
 
         # get normalized tcp
-        target_frame_tcp_list = np.array(target_frame_tcp_list, dtype=np.float32)
+        # target_frame_tcp_list = np.array(target_frame_tcp_list, dtype=np.float32)
+        target_action_list = np.array(target_action_list, dtype=np.float32)
         # target_frame_tcp_list = self._clip_tcp(target_frame_tcp_list)
-        target_frame_tcp_normalized = self._normalize_tcp(target_frame_tcp_list.copy())
+        # target_frame_tcp_normalized = self._normalize_tcp(target_frame_tcp_list.copy())
+        target_action_normalized = self._normalize_action(target_action_list.copy())
         # transform quaternion to 6d rotation
-        if self.rot_6d:
-            target_frame_rotation_6d = batch_quaternion_to_rotation6d(target_frame_tcp_normalized[:,3:7])
-            target_frame_tcp_normalized = np.concatenate([target_frame_tcp_normalized[:,0:3], target_frame_rotation_6d, target_frame_tcp_normalized[:,-1:]], axis=-1)
-
-        # get instruction
-        # if self.task_descriptions is not None:
-        #     instruction = self.task_descriptions[task_id[:9]]['task_description_english']
-        #     language_embed = self.task_descriptions[task_id[:9]]['embedding']
-        #     language_mask = self.task_descriptions[task_id[:9]]['token_mask']
-        # else:
-        #     instruction = 'hello!'
+        # if self.rot_6d:
+        #     target_frame_rotation_6d = batch_quaternion_to_rotation6d(target_frame_tcp_normalized[:,3:7])
+        #     target_frame_tcp_normalized = np.concatenate([target_frame_tcp_normalized[:,0:3], target_frame_rotation_6d, target_frame_tcp_normalized[:,-1:]], axis=-1)
 
         # split data
-        input_frame_tcp_list = target_frame_tcp_list[:self.num_input]
-        target_frame_tcp_list = target_frame_tcp_list[self.num_input:]
-        input_frame_tcp_normalized = target_frame_tcp_normalized[:self.num_input]
-        target_frame_tcp_normalized = target_frame_tcp_normalized[self.num_input:]
+        # input_frame_tcp_list = target_frame_tcp_list[:self.num_input]
+        # target_frame_tcp_list = target_frame_tcp_list[self.num_input:]
+        input_frame_action_list = target_action_list[:self.num_input]
+        target_frame_action_list = target_action_list[self.num_input:]
+
+        # input_frame_tcp_normalized = target_frame_tcp_normalized[:self.num_input]
+        # target_frame_tcp_normalized = target_frame_tcp_normalized[self.num_input:]
+        input_frame_action_normalized = target_action_normalized[:self.num_input]
+        target_frame_action_normalized = target_action_normalized[self.num_input:]
         padding_mask = padding_mask[self.num_input:]
 
         # convert to torch
-        input_frame_tcp_normalized = torch.from_numpy(input_frame_tcp_normalized)
-        target_frame_tcp_normalized = torch.from_numpy(target_frame_tcp_normalized)
+        # input_frame_tcp_normalized = torch.from_numpy(input_frame_tcp_normalized)
+        # target_frame_tcp_normalized = torch.from_numpy(target_frame_tcp_normalized)
+        input_frame_action_normalized = torch.from_numpy(input_frame_action_normalized)
+        target_frame_action_normalized = torch.from_numpy(target_frame_action_normalized)
         padding_mask = torch.from_numpy(padding_mask)
         # language_embed = torch.from_numpy(language_embed)
         # language_mask = torch.from_numpy(language_mask)
 
         if self.num_input == 1:
             top_image_list = top_image_list[0]
-            wrist_image_list = wrist_image_list[0]
-            input_frame_tcp_list = input_frame_tcp_list[0]
-            input_frame_tcp_normalized = input_frame_tcp_normalized[0]
+            # wrist_image_list = wrist_image_list[0]
+            input_frame_action_list = input_frame_action_list[0]
+            input_frame_action_normalized = input_frame_action_normalized[0]
 
         ret_dict = {
                     # 'instruction': instruction,
                     # 'language_embed': language_embed,
                     # 'language_mask': language_mask,
                     'top_image_list': top_image_list,
-                    'wrist_image_list': wrist_image_list,
-                    'input_frame_tcp_list': input_frame_tcp_list,
-                    'input_frame_tcp_normalized': input_frame_tcp_normalized,
-                    'target_frame_tcp_list': target_frame_tcp_list,
-                    'target_frame_tcp_normalized': target_frame_tcp_normalized,
+                    # 'wrist_image_list': wrist_image_list,
+                    # 'input_frame_tcp_list': input_frame_tcp_list,
+                    # 'input_frame_tcp_normalized': input_frame_tcp_normalized,
+                    # 'target_frame_tcp_list': target_frame_tcp_list,
+                    # 'target_frame_tcp_normalized': target_frame_tcp_normalized,
+                    'input_frame_action_list': input_frame_action_list,
+                    'target_frame_action_list': target_frame_action_list,
+                    'input_frame_action_normalized': input_frame_action_normalized,
+                    'target_frame_action_normalized': target_frame_action_normalized,
                     'padding_mask': padding_mask,
                     'task_id': task_id,
                     'target_frame_ids': target_frame_ids,
@@ -1093,8 +459,7 @@ def load_real_tasks(task_root, task_configs, split='train'):
     assert split in ['train', 'val', 'all']
     task_ids = []
     cam_ids = []
-    config_ids = []
-    task_root = os.path.join(task_root, split)
+    # task_root = os.path.join(task_root, split)
     unique_task_ids = sorted(os.listdir(task_root))
     ##########################
     # # for grasping experiments
@@ -1102,58 +467,32 @@ def load_real_tasks(task_root, task_configs, split='train'):
     ##########################
     ##########################
     # for iros experiments (511,512,513,514,515,516,517,518,519,520,521)
-    if unique_task_ids:
-        # Extract the first task ID from the first directory name
-        # E.g., from 'task_0703_user_0099_scene_0001_cfg_0001', extract 'task_0703'
-        target_task_id = unique_task_ids[0].split('_user_')[0]
-        print(f"Dynamically selected target task ID: {target_task_id}")
-    else:
-        raise ValueError(f"No task directories found in {task_root}")
-    print(target_task_id)
-    unique_task_ids = [x for x in unique_task_ids if target_task_id in x]
-    ##########################
-    ##########################
-    # # for task_0013
-    # unique_task_ids = [x for x in unique_task_ids if 'task_0013' in x]
-    # # for task_0013 78sample
-    # unique_task_ids = [x for x in unique_task_ids if 'user_0099' in x]
-    ##########################
-    ##########################
-    # # for multi-obj task_0013
-    # unique_task_ids = list(range(24,29)) + list(range(36,43))
-    # unique_task_ids = ['task_0013_user_0100_scene_%04d_cfg_0001'\
-    #                             % x for x in unique_task_ids]
-    ##########################
+    # if unique_task_ids:
+    #     # Extract the first task ID from the first directory name
+    #     # E.g., from 'task_0703_user_0099_scene_0001_cfg_0001', extract 'task_0703'
+    #     target_task_id = unique_task_ids[0].split('_user_')[0]
+    #     print(f"Dynamically selected target task ID: {target_task_id}")
+    # else:
+    #     raise ValueError(f"No task directories found in {task_root}")
+    # print(target_task_id)
+    # unique_task_ids = [x for x in unique_task_ids if target_task_id in x]
+
+    print(unique_task_ids)
+
     for task_id in unique_task_ids:
-        config_id = 'RH100T_cfg%d' % int(task_id[-1])
-        if config_id not in task_configs:
-            continue
         task_dir = os.path.join(task_root, task_id)
         cur_cam_ids = os.listdir(task_dir)
-        cur_cam_ids = [x for x in cur_cam_ids if 'cam' in x and '043322070878' not in x]
-        ##########################
-        # for grasping experiments
-        # cur_cam_ids = [x for x in cur_cam_ids if x == 'cam_750612070851']
-        ##########################
+        cur_cam_ids = ['cam_3']
         for cam_id in cur_cam_ids:
             task_ids.append(task_id)
             cam_ids.append(cam_id)
-            config_ids.append(config_id)
-    return task_ids, cam_ids, config_ids
-
+    return task_ids, cam_ids
 
 def load_all_tasks(task_root, task_configs, split='train', cache_dict=None, inference_mode=False):
     assert split in ['train', 'val', 'all']
     task_ids = []
     cam_ids = []
     config_ids = []
-    in_hand_cam_ids = {'RH100T_cfg1': ['cam_043322070878'],
-                       'RH100T_cfg2': ['cam_104422070042'],
-                       'RH100T_cfg3': ['cam_045322071843'],
-                       'RH100T_cfg4': ['cam_045322071843'],
-                       'RH100T_cfg5': ['cam_104422070042', 'cam_135122079702'],
-                       'RH100T_cfg6': ['cam_135122070361', 'cam_135122075425'],
-                       'RH100T_cfg7': ['cam_135122070361', 'cam_135122075425']}
     # if split == 'train':
     #     selected_scenes = list(range(1,10))
     # elif split == 'val':
@@ -1193,11 +532,6 @@ def load_all_tasks(task_root, task_configs, split='train', cache_dict=None, infe
         user_ids = {_get_user_id(tid) for tid in task_ids}
         user_ids = sorted(list(user_ids))
         return user_ids
-
-    def _get_scene_meta(scene_dir):
-        meta_path = os.path.join(scene_dir, 'metadata.json')
-        metadata = json.load(open(meta_path))
-        return metadata
 
     def _get_val_user_ids(task_ids):
         val_user_ids = {}
@@ -1262,17 +596,8 @@ def load_all_tasks(task_root, task_configs, split='train', cache_dict=None, infe
             #     # print(task_id)
             #     continue
             scene_dir = os.path.join(task_root, task_config, task_id)
-            metadata = _get_scene_meta(scene_dir)
-            if 'rating' not in metadata or metadata['rating'] <= 1:
-                continue
             cur_cam_ids = _search_cam_ids(scene_dir)
             for cam_id in cur_cam_ids:
-                if cam_id in in_hand_cam_ids[task_config]:
-                    # print(scene_dir, cam_id)
-                    continue
-                if 'bad_calib_view' in metadata and cam_id[4:] in metadata['bad_calib_view']:
-                    # print(scene_dir, cam_id)
-                    continue
                 if not _validate_scene(scene_dir, cam_id):
                     # print(scene_dir, cam_id)
                     continue
@@ -1415,25 +740,20 @@ def batch_rotation6d_to_quaternion(batch_rot6d):
 
 if __name__ == "__main__":
     dataset_root = '/aidata'
-    dataset_root = '/data/chenxi/dataset/real_data_sampled'
+    dataset_root = '/zihao-fast-vol/vr_data'
     # task_config_list = ['RH100T_cfg1','RH100T_cfg2','RH100T_cfg3','RH100T_cfg4','RH100T_cfg5','RH100T_cfg6','RH100T_cfg7']
     task_config_list = ['RH100T_cfg1']
-    task_descriptions = json.load(open('task_list/task_description.json'))
-    dataset = RH100TDataset(dataset_root, task_config_list, 'train', task_descriptions, num_input=2, horizon=16, timestep=-1, filter_frames=True, augmentation=False, tcp_mode='base')
+    dataset = RH100TDataset(dataset_root, task_config_list, 'train', num_input=1, horizon=16, timestep=-1, augmentation=False, tcp_mode='base')
     print(len(dataset))
     xmin, xmax, ymin, ymax, zmin, zmax = 1, -1, 1, -1, 1, -1
     for i in tqdm(range(0,len(dataset))):
         batch = dataset[i]
-        tcp_list = batch['target_frame_tcp_list']
-        xmin = min(xmin, tcp_list[:,0].min())
-        xmax = max(xmax, tcp_list[:,0].max())
-        ymin = min(ymin, tcp_list[:,1].min())
-        ymax = max(ymax, tcp_list[:,1].max())
-        zmin = min(zmin, tcp_list[:,2].min())
-        zmax = max(zmax, tcp_list[:,2].max())
-    print('xmin:', xmin)
-    print('xmax:', xmax)
-    print('ymin:', ymin)
-    print('ymax:', ymax)
-    print('zmin:', zmin)
-    print('zmax:', zmax)
+        input_frame_action_list = batch['input_frame_action_list']
+        action_list = batch['target_frame_action_list']
+        top_image_list = batch['top_image_list']
+        print(input_frame_action_list.shape)
+        print(action_list.shape)
+        print(top_image_list.shape)
+
+
+        

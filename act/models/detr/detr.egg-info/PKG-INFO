@@ -1,7 +1,10 @@
 Metadata-Version: 2.1
 Name: detr
 Version: 0.0.0
+Summary: UNKNOWN
+Home-page: UNKNOWN
 License: MIT License
+Platform: UNKNOWN
 License-File: LICENSE
 
 This part of the codebase is modified from DETR https://github.com/facebookresearch/detr under APACHE 2.0.
@@ -13,3 +16,4 @@ This part of the codebase is modified from DETR https://github.com/facebookresea
       year={2020},
       volume={abs/2005.12872}
     }
+

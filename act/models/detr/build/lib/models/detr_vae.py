@@ -112,17 +112,13 @@ class DETRVAE(nn.Module):
             latent_input = self.latent_out_proj(latent_sample)
 
         if self.backbones is not None:
-            # Ensure image shape is [batch, num_cam, 3, H, W]
-            if wrist_image is None:
-                # top_image: [batch, 3, H, W] -> [batch, 1, 3, H, W]
-                image = top_image.unsqueeze(1)
-            else:
-                # stack cameras: [batch, 3, H, W] x 2 -> [batch, 2, 3, H, W]
-                image = torch.stack([top_image, wrist_image], dim=1)
+            image = torch.stack([top_image, wrist_image], axis=1)
+            # Image observation features and position embeddings
+            if len(image.shape) == 6:
+                image = rearrange(image, 'b nh nc c h w -> b (nh nc) c h w')
             all_cam_features = []
             all_cam_pos = []
             for cam_id, cam_name in enumerate(self.camera_names):
-                # image[:, cam_id]: [batch, 3, H, W]
                 features, pos = self.backbones[cam_id](image[:, cam_id])
                 features = features[0] # take the last layer feature
                 pos = pos[0]

@@ -94,23 +94,38 @@ def get_observation(top_serial, wrist_serial, gripper):
 
     return top_image, wrist_image, tcp
 
-def pre_process(tcp, max_gripper_width=0.11):
-    trans_min, trans_max = np.array([0, -0.5, 0]), np.array([1.0, 0.5, 0.3])
-    tcp[...,:3] = (tcp[...,:3] - trans_min) / (trans_max - trans_min) * 2 - 1
-    # tcp[...,-1] = tcp[...,-1] / max_gripper_width * 2 - 1
-    if ROT6D:
-        rot6d = quaternion_to_rotation6d(tcp[3:7])
-        tcp = np.concatenate([tcp[:3], rot6d, tcp[-1:]])
-    return tcp
+# def pre_process(tcp, max_gripper_width=0.11):
+#     trans_min, trans_max = np.array([0, -0.5, 0]), np.array([1.0, 0.5, 0.3])
+#     tcp[...,:3] = (tcp[...,:3] - trans_min) / (trans_max - trans_min) * 2 - 1
+#     # tcp[...,-1] = tcp[...,-1] / max_gripper_width * 2 - 1
+#     if ROT6D:
+#         rot6d = quaternion_to_rotation6d(tcp[3:7])
+#         tcp = np.concatenate([tcp[:3], rot6d, tcp[-1:]])
+#     return tcp
 
-def post_process(tcp, max_gripper_width=0.11):
-    trans_min, trans_max = np.array([0, -0.5, 0]), np.array([1.0, 0.5, 0.3])
-    tcp[...,:3] = (tcp[...,:3] + 1) / 2.0 * (trans_max - trans_min) + trans_min
-    # tcp[...,-1] = (tcp[...,-1] + 1) / 2.0 * max_gripper_width
-    if ROT6D:
-        quat = rotation6d_to_quaternion(tcp[3:9])
-        tcp = np.concatenate([tcp[:3], quat, tcp[-1:]])
-    return tcp
+def pre_process(action):
+    """ action_list: [T, 13] """
+    joint_min = np.array([-2*np.pi, -2*np.pi, -2*np.pi, -2*np.pi, -2*np.pi, -2*np.pi, -2*np.pi])
+    joint_max = np.array([2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi])
+    action_list[:,:7] = (action_list[:,:7] - joint_min) / (joint_max - joint_min) * 2 - 1
+    return action_list
+
+
+# def post_process(tcp, max_gripper_width=0.11):
+#     trans_min, trans_max = np.array([0, -0.5, 0]), np.array([1.0, 0.5, 0.3])
+#     tcp[...,:3] = (tcp[...,:3] + 1) / 2.0 * (trans_max - trans_min) + trans_min
+#     # tcp[...,-1] = (tcp[...,-1] + 1) / 2.0 * max_gripper_width
+#     if ROT6D:
+#         quat = rotation6d_to_quaternion(tcp[3:9])
+#         tcp = np.concatenate([tcp[:3], quat, tcp[-1:]])
+#     return tcp
+
+def post_process(action):
+    """ action_list: [T, 13] """
+    joint_min = np.array([-2*np.pi, -2*np.pi, -2*np.pi, -2*np.pi, -2*np.pi, -2*np.pi, -2*np.pi])
+    joint_max = np.array([2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi, 2*np.pi])
+    action[:,:7] = (action[:,:7] + 1) / 2.0 * (joint_max - joint_min) + joint_min
+    return action
 
 def main(args):
     set_seed(1)
@@ -124,12 +139,12 @@ def main(args):
 
     # get task parameters
     episode_len = 100 # task_config['episode_len']
-    camera_names = ['top', 'wrist'] #task_config['camera_names']
+    # camera_names = ['top', 'wrist'] #task_config['camera_names']
+    camera_names = ['top'] #task_config['camera_names']
     chunk_size = args['chunk_size']
 
     # fixed parameters
-    # state_dim = 4
-    state_dim = 10 if ROT6D else 8
+    state_dim = 13 # 7 for robot joints, 6 for hand qpos
     lr_backbone = 1e-5
     backbone = 'resnet18'
     if policy_class == 'ACT':
@@ -221,13 +236,6 @@ def eval_bc(config):
     wrist_serial = '043322070878'
     os.system('cd dataset/HIReal/camera_sdk/ && bash camera_shm_run.sh &')
     time.sleep(5)
-
-    # # initialize RH100T data transform
-    # print('Init RH100T data transform')
-    # confs = load_conf("dataset/HIReal/configs.json")
-    # calib_folder = '/home/ubuntu/data/calib/1708166065375'
-    # conf = confs[0] # when testing with conf 1, simply select the first item
-    # projector = RH100TOnline(calib_folder, conf, serial)
     
     # preparation for load policy
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -276,6 +284,7 @@ def eval_bc(config):
         for t in range(max_timesteps):
             start_time = time.time()
             # fetch images
+            # TODO: get top_image and action
             top_image, wrist_image, tcp = get_observation(top_serial, wrist_serial, gripper)
             top_image = tf(Image.fromarray(top_image)).unsqueeze(0).to(device)
             wrist_image = tf(Image.fromarray(wrist_image)).unsqueeze(0).to(device)
@@ -287,8 +296,8 @@ def eval_bc(config):
             # fetch robot states
             if fixed_rot is None:
                 fixed_rot = tcp[3:7]
-            # qpos = np.concatenate([tcp[:3], tcp[-1:]], axis=0)
-            qpos = tcp
+            
+            qpos = action
             qpos = torch.from_numpy(pre_process(qpos))
             qpos = qpos.float().unsqueeze(0)
             qpos = qpos.to(device)
@@ -338,8 +347,10 @@ def eval_bc(config):
             
             # action
             action_tcp[:3] = action_tcp[:3] * SCALE + OFFSET
-            action_tcp[2] = max(action_tcp[2], 0.002)
+            # action_tcp[2] = max(action_tcp[2], 0.002)
             print(action_tcp)
+
+            # send action to robot
             if prev_rot is not None and rot_diff(prev_rot, action_tcp[3:7]) > np.pi/24:
                 quat_list = discrete_rotation(prev_rot, action_tcp[3:7])
                 for quat in quat_list:

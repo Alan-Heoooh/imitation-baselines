@@ -18,4 +18,6 @@
 
 # CUDA_VISIBLE_DEVICES=0,1 torchrun --master_addr 192.168.3.23 --master_port 12355 --nproc_per_node 2 --nnodes 1 --node_rank 0 finetune.py --ckpt_dir logs_6024/log_20240226_task521_50sample_rot6d --policy_class ACT --batch_size 64 --seed 233 --num_epoch 1000 --save_epoch 50 --lr 5e-5 --kl_weight 10 --chunk_size 20 --hidden_dim 512 --dim_feedforward 3200 --task_name task_0013
 
-CUDA_VISIBLE_DEVICES=8,9 torchrun --master_addr 192.168.3.50 --master_port 12355 --nproc_per_node 2 --nnodes 1 --node_rank 0 finetune.py --ckpt_dir logs/test/20240913_cup_mix_2 --policy_class ACT --batch_size 64 --seed 233 --num_epoch 1000 --save_epoch 50 --lr 5e-5 --kl_weight 10 --chunk_size 20 --hidden_dim 512 --dim_feedforward 3200 --task_name task_0013 --dataset_root /data/zihao_6024/data/wipe
+# CUDA_VISIBLE_DEVICES=8,9 torchrun --master_addr 192.168.3.50 --master_port 12355 --nproc_per_node 2 --nnodes 1 --node_rank 0 finetune.py --ckpt_dir logs/test/20240913_cup_mix_2 --policy_class ACT --batch_size 64 --seed 233 --num_epoch 1000 --save_epoch 50 --lr 5e-5 --kl_weight 10 --chunk_size 20 --hidden_dim 512 --dim_feedforward 3200 --task_name task_0013 --dataset_root /data/zihao_6024/data/wipe
+
+python3 finetune.py --ckpt_dir logs/test/pich_and_place --policy_class ACT --batch_size 64 --seed 233 --num_epoch 1000 --save_epoch 50 --lr 5e-5 --kl_weight 10 --chunk_size 20 --hidden_dim 512 --dim_feedforward 3200 --task_name task_0013 --dataset_root /zihao-fast-vol/vr_data

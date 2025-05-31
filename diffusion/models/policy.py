@@ -17,20 +17,20 @@ class DiffusionPolicy(nn.Module):
         n_obs_steps = 1
         horizon = n_obs_steps + n_action_steps - 1
         obs_input_dim = 3
-        obs_feature_dim = 512 * 2
+        obs_feature_dim = 512
         self.model = DiffusionUNetImagePolicy(args_override, action_dim, horizon, n_action_steps, n_obs_steps, obs_input_dim, obs_feature_dim)
         self.model.cuda()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=args_override['lr'], betas=[0.95,0.999], weight_decay=1e-6)
         print("Model params: %e" % sum(p.numel() for p in self.model.parameters()))
 
-    def __call__(self, obs_top, obs_wrist, actions=None):
+    def __call__(self, obs_top, actions=None):
         if actions is not None: # training time
-            l2 = self.model.compute_loss(obs_top, obs_wrist, actions)
+            l2 = self.model.compute_loss(obs_top, actions)
             loss_dict = dict()
             loss_dict['loss'] = l2
             return loss_dict
         else: # inference time
-            result = self.model.predict_action(obs_top, obs_wrist)
+            result = self.model.predict_action(obs_top)
             return result['action']
 
     def configure_optimizers(self):

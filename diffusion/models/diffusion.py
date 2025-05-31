@@ -34,7 +34,7 @@ class DiffusionUNetImagePolicy(nn.Module):
 
         # create obs encoder and get feature dim
         self.obs_encoder_top = get_resnet()
-        self.obs_encoder_wrist = get_resnet()
+        # self.obs_encoder_wrist = get_resnet()
 
         # create diffusion model
         input_dim = action_dim + obs_feature_dim
@@ -128,7 +128,7 @@ class DiffusionUNetImagePolicy(nn.Module):
         return trajectory
 
 
-    def predict_action(self, obs_top, obs_wrist) -> Dict[str, torch.Tensor]:
+    def predict_action(self, obs_top) -> Dict[str, torch.Tensor]:
         """
         obs_dict: must include "obs" key
         result: must include "action" key
@@ -152,8 +152,9 @@ class DiffusionUNetImagePolicy(nn.Module):
         dtype = obs_top.dtype
 
         obs_features_top = self.obs_encoder_top(obs_top)
-        obs_features_wrist = self.obs_encoder_wrist(obs_wrist)
-        obs_features = torch.cat([obs_features_top, obs_features_wrist], dim=1)
+        # obs_features_wrist = self.obs_encoder_wrist(obs_wrist)
+        # obs_features = torch.cat([obs_features_top, obs_features_wrist], dim=1)
+        obs_features = obs_features_top
         assert obs_features.shape[0] == B * To
         
         # handle different ways of passing observation
@@ -208,7 +209,7 @@ class DiffusionUNetImagePolicy(nn.Module):
     # def set_normalizer(self, normalizer: LinearNormalizer):
     #     self.normalizer.load_state_dict(normalizer.state_dict())
 
-    def compute_loss(self, obs_top, obs_wrist, actions):
+    def compute_loss(self, obs_top, actions):
         ''' qpos: [action_dim,]
             sinput: [B*To*N, 6]
             language_embed: [B, 77, 1024]
@@ -246,9 +247,11 @@ class DiffusionUNetImagePolicy(nn.Module):
         # soutput = self.obs_encoder(sinput)
         # sfeat = self.obs_feature_pool(soutput)
         # obs_features = sfeat.F
+
+        # print("obs_top shape:", obs_top.shape)
         obs_features_top = self.obs_encoder_top(obs_top)
-        obs_features_wrist = self.obs_encoder_wrist(obs_wrist)
-        obs_features = torch.cat([obs_features_top, obs_features_wrist], dim=1)
+        # obs_features = torch.cat([obs_features_top, obs_features_wrist], dim=1)
+        obs_features = obs_features_top
         assert obs_features.shape[0] == batch_size * self.n_obs_steps
             
         if self.obs_as_global_cond:
